@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { SCENARIOS } from "@/data/scenarios";
@@ -953,9 +953,17 @@ function StepReview({ launching }: { launching: boolean }) {
   );
 }
 
+// Isolated so that useSearchParams() is inside a Suspense boundary (Next.js requirement)
+function ChallengeDetector({ onChallenge }: { onChallenge: () => void }) {
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get("challenge") === "1") onChallenge();
+  }, []);
+  return null;
+}
+
 export default function SetupPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [step, setStep] = useState(0);
   const [launching, setLaunching] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState(LOADING_MESSAGES[0]);
@@ -967,15 +975,6 @@ export default function SetupPage() {
   const rules = useRulesStore((s) => s.rules);
   const initSimulation = useSimulationStore((s) => s.initSimulation);
   const submitTrade = useSimulationStore((s) => s.submitTrade);
-
-  // Auto-select daily challenge scenario if ?challenge=1
-  useEffect(() => {
-    if (searchParams.get("challenge") === "1" && !scenario) {
-      const dailyIdx = Math.floor(Date.now() / 86400000) % SCENARIOS.length;
-      setScenario(SCENARIOS[dailyIdx]);
-      setStep(1);
-    }
-  }, []);
 
   // Rotate loading messages during launch
   useEffect(() => {
@@ -1034,6 +1033,18 @@ export default function SetupPage() {
 
   return (
     <main className="min-h-screen flex flex-col px-4 py-6 max-w-lg mx-auto">
+      {/* useSearchParams must live inside Suspense per Next.js App Router rules */}
+      <Suspense>
+        <ChallengeDetector
+          onChallenge={() => {
+            if (!scenario) {
+              const dailyIdx = Math.floor(Date.now() / 86400000) % SCENARIOS.length;
+              setScenario(SCENARIOS[dailyIdx]);
+              setStep(1);
+            }
+          }}
+        />
+      </Suspense>
       <div className="flex items-center gap-3 mb-6">
         <Link href="/" className="text-secondary text-sm hover:text-primary transition-colors">
           Back
