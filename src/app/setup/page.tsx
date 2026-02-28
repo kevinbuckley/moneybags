@@ -949,6 +949,18 @@ function StepReview({ launching }: { launching: boolean }) {
           </div>
         )}
       </div>
+      {/* Warn when buy rules exist but portfolio is 100% invested — no cash to spend */}
+      {rules.some((r) => r.enabled && r.action.type === "buy") && totalPct >= 99 && (
+        <div className="bg-loss/10 border border-loss/30 rounded-xl p-3 flex gap-2 items-start">
+          <span className="text-loss text-base shrink-0">⚠️</span>
+          <div>
+            <p className="text-loss text-xs font-semibold">No cash reserve for buy rules</p>
+            <p className="text-secondary text-xs mt-0.5">
+              You&apos;re 100% invested — your buy rules will fire but have nothing to spend. Go back and allocate less than 100% to leave cash on the sideline.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
