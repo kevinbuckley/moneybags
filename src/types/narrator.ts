@@ -18,6 +18,7 @@ export type NarratorTrigger =
   | "scenario_event"
   | "simulation_start"
   | "simulation_complete"
+  | "portfolio_milestone"
   | "ambient";
 
 export interface NarratorContext {

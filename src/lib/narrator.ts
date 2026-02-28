@@ -141,6 +141,15 @@ const MESSAGES: Record<NarratorTrigger, { channel: NarratorChannel; severity: Na
       "Let's see how this goes. Spoiler: nobody knows.",
     ],
   },
+  portfolio_milestone: {
+    channel: "popup",
+    severity: "info",
+    pool: [
+      "Portfolio milestone: {pct}. Take a screenshot before it reverses.",
+      "You're at {pct}. The market giveth.",
+      "At {pct} now. Stay calm. Stay dangerous.",
+    ],
+  },
   simulation_complete: {
     channel: "popup",
     severity: "info",
@@ -189,4 +198,30 @@ export function generateNarratorEvent(
 
 export function generateAmbientEvent(): NarratorEvent {
   return generateNarratorEvent("ambient");
+}
+
+export function generateMilestoneEvent(returnPct: number): NarratorEvent {
+  const sign = returnPct >= 0 ? "+" : "";
+  const label = `${sign}${(returnPct * 100).toFixed(0)}%`;
+  const severity: NarratorSeverity = returnPct <= -0.2 ? "critical" : returnPct <= -0.1 ? "warning" : "info";
+  const pools: Record<string, string[]> = {
+    "+10": ["Up +10%. The crowd starts to believe.", "That's a +10% milestone. Respectable.", "+10%. Getting interesting."],
+    "+25": ["You're up +25%. Don't get cocky.", "+25% return. You're out-earning most hedge funds. Today.", "Quarter-century percent. Nice."],
+    "+50": ["+50%! You're printing money. Fake money.", "Up +50%. If only this were real.", "Fifty. Percent. Up. Take a moment."],
+    "-20": ["Down -20%. This is a correction. Probably.", "-20%. The market is testing your character.", "You've lost a fifth of it. Breathe."],
+    "-50": ["Half gone. Spectacular.", "Down -50%. This is a case study now.", "You've found the bottom. Maybe."],
+  };
+  const key = Object.keys(pools).find((k) => {
+    const threshold = parseFloat(k) / 100;
+    return Math.abs(threshold - returnPct) < 0.001;
+  });
+  const pool = key ? pools[key] : [`Portfolio at ${label}. Noted.`];
+  return {
+    id: `milestone-${++_eventCounter}`,
+    channel: "popup",
+    message: pool[Math.floor(Math.random() * pool.length)],
+    trigger: "portfolio_milestone",
+    severity,
+    timestamp: new Date().toISOString(),
+  };
 }

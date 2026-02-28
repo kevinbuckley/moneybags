@@ -1,14 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSimulationStore } from "@/store/simulationStore";
 import { TradePanel } from "./TradePanel";
 import { formatCurrency } from "@/lib/format";
+
+function positionEmoji(returnPct: number): string {
+  if (returnPct >= 20) return "🔥";
+  if (returnPct >= 0)  return "📈";
+  if (returnPct > -30) return "📉";
+  return "💀";
+}
 
 export function PortfolioPanel() {
   const state = useSimulationStore((s) => s.state);
   const [tradeOpen, setTradeOpen] = useState(false);
   const [tradeTicker, setTradeTicker] = useState<string | null>(null);
+  const [flash, setFlash] = useState<"gain" | "loss" | null>(null);
+  const prevValueRef = useRef<number | null>(null);
 
   const portfolio = state?.portfolio;
   const history = state?.history ?? [];
@@ -18,6 +27,20 @@ export function PortfolioPanel() {
   const dayChange = totalValue - prevDayValue;
   const dayChangePct = prevDayValue > 0 ? (dayChange / prevDayValue) * 100 : 0;
   const totalReturn = startingValue > 0 ? ((totalValue - startingValue) / startingValue) * 100 : 0;
+
+  // Flash the portfolio value briefly on each tick
+  useEffect(() => {
+    if (prevValueRef.current === null) {
+      prevValueRef.current = totalValue;
+      return;
+    }
+    if (totalValue === prevValueRef.current) return;
+    const direction = totalValue > prevValueRef.current ? "gain" : "loss";
+    prevValueRef.current = totalValue;
+    setFlash(direction);
+    const t = setTimeout(() => setFlash(null), 350);
+    return () => clearTimeout(t);
+  }, [totalValue]);
 
   const openTrade = (ticker: string | null) => {
     setTradeTicker(ticker);
@@ -31,7 +54,15 @@ export function PortfolioPanel() {
         <div className="flex items-start justify-between mb-3">
           <div>
             <p className="text-xs text-secondary mb-0.5">Portfolio Value</p>
-            <p className="text-2xl font-bold font-mono text-primary">
+            <p
+              className={`text-2xl font-bold font-mono transition-colors duration-300 ${
+                flash === "gain"
+                  ? "text-gain"
+                  : flash === "loss"
+                  ? "text-loss"
+                  : "text-primary"
+              }`}
+            >
               {formatCurrency(totalValue)}
             </p>
             <div className="flex items-center gap-3 mt-0.5">
@@ -55,23 +86,20 @@ export function PortfolioPanel() {
         {portfolio && portfolio.positions.length > 0 && (
           <div className="flex flex-col gap-1">
             {portfolio.positions.map((pos) => {
-              const weight =
-                totalValue > 0 ? (pos.currentValue / totalValue) * 100 : 0;
+              const weight = totalValue > 0 ? (pos.currentValue / totalValue) * 100 : 0;
               const entryValue = pos.quantity * pos.entryPrice;
               const posReturn =
                 entryValue > 0
                   ? ((pos.currentValue - entryValue) / entryValue) * 100
                   : 0;
               return (
-                <div
-                  key={pos.id}
-                  className="flex items-center gap-2 py-1"
-                >
+                <div key={pos.id} className="flex items-center gap-2 py-1">
                   <button
                     onClick={() => openTrade(pos.ticker)}
-                    className="text-accent font-mono font-bold text-xs w-12 shrink-0 text-left hover:text-accent/70 transition-colors"
+                    className="font-mono font-bold text-xs w-16 shrink-0 text-left hover:opacity-70 transition-opacity flex items-center gap-1 text-accent"
                   >
-                    {pos.ticker}
+                    <span className="text-sm">{positionEmoji(posReturn)}</span>
+                    <span>{pos.ticker}</span>
                   </button>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
@@ -92,7 +120,7 @@ export function PortfolioPanel() {
             {/* Cash row */}
             {portfolio.cashBalance > 0.01 && (
               <div className="flex items-center gap-2 py-1">
-                <span className="text-muted font-mono text-xs w-12 shrink-0">CASH</span>
+                <span className="text-muted font-mono text-xs w-16 shrink-0">💵 CASH</span>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
                     <span className="text-secondary text-xs font-mono">
