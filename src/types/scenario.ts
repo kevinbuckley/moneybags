@@ -17,4 +17,6 @@ export interface Scenario {
   difficulty: "Easy" | "Hard" | "Brutal"; // subjective survivability rating
   riskFreeRate: number; // annualized decimal, e.g. 0.02
   events: ScenarioEvent[];
+  /** If set, load price data from this slug instead of `slug` (allows reusing existing data) */
+  dataSlug?: string;
 }

@@ -87,6 +87,23 @@ function getConditionValue(
       if (!curr || !prev || prev === 0) return 0;
       return ((curr - prev) / prev) * 100;
     }
+
+    case "trailing_stop_pct": {
+      // % drop of ticker from its peak close price since simulation start (positive = fallen)
+      if (!condition.ticker) return null;
+      const series = priceData.get(condition.ticker);
+      if (!series) return null;
+      const currIdx = Math.min(currentDateIndex, series.length - 1);
+      const currentClose = series[currIdx]?.close;
+      if (!currentClose) return null;
+      let peak = 0;
+      for (let i = 0; i <= currIdx; i++) {
+        const c = series[i]?.close ?? 0;
+        if (c > peak) peak = c;
+      }
+      if (peak === 0) return 0;
+      return ((peak - currentClose) / peak) * 100;
+    }
   }
 }
 

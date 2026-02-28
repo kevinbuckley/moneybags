@@ -7,7 +7,9 @@ export type RuleSubject =
   | "position_weight_pct"
   | "cash_balance"
   | "market_change_pct"
-  | "days_elapsed";
+  | "days_elapsed"
+  /** % drop from peak close price since simulation start (positive = fallen from peak) */
+  | "trailing_stop_pct";
 
 export type RuleOperator = "gt" | "lt" | "gte" | "lte";
 
@@ -22,7 +24,7 @@ export interface RuleCondition {
   subject: RuleSubject;
   operator: RuleOperator;
   value: number;
-  ticker?: string; // required for position_change_pct, position_weight_pct
+  ticker?: string; // required for position_change_pct, position_weight_pct, trailing_stop_pct
 }
 
 export interface RuleAction {

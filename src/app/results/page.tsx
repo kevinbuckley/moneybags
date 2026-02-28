@@ -49,6 +49,7 @@ export default function ResultsPage() {
   const addedRef = useRef(false);
   const [copied, setCopied] = useState(false);
   const [replaying, setReplaying] = useState(false);
+  const [challengeCopied, setChallengeCopied] = useState(false);
   // History scrubber: null = show full history
   const [scrubIndex, setScrubIndex] = useState<number | null>(null);
 
@@ -123,6 +124,17 @@ export default function ResultsPage() {
     resetPortfolio();
     resetRules();
     router.push("/setup");
+  };
+
+  const handleCopyChallenge = () => {
+    if (!state) return;
+    const { scenario, allocations } = state.config;
+    const a = allocations.map((al) => `${al.ticker}:${Math.round(al.pct)}`).join(",");
+    const url = `${window.location.origin}/setup?s=${scenario.slug}&a=${a}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setChallengeCopied(true);
+      setTimeout(() => setChallengeCopied(false), 2500);
+    });
   };
 
   const handleReplay = async () => {
@@ -376,6 +388,13 @@ export default function ResultsPage() {
           className="bg-elevated text-primary font-medium rounded-xl px-6 py-3 text-sm border border-border min-h-[44px] flex items-center justify-center hover:border-secondary transition-colors"
         >
           {copied ? "Copied! ✓" : "Copy Results"}
+        </button>
+        {/* Challenge a friend */}
+        <button
+          onClick={handleCopyChallenge}
+          className="bg-elevated text-secondary font-medium rounded-xl px-6 py-3 text-sm border border-border min-h-[44px] flex items-center justify-center gap-1.5 hover:border-secondary transition-colors"
+        >
+          {challengeCopied ? "Link copied! ✓" : "⚔️ Challenge a Friend"}
         </button>
         <button
           onClick={handlePlayAgain}

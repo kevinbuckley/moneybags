@@ -97,6 +97,25 @@ export const SCENARIOS: Scenario[] = [
       { date: "2022-11-11", label: "FTX Bankrupt", description: "FTX files for bankruptcy; Sam Bankman-Fried arrested." },
     ],
   },
+  {
+    slug: "tutorial",
+    name: "Tutorial — Your First Trade",
+    startDate: "2020-01-02",
+    endDate: "2020-12-31",
+    description: "Learn the basics with the COVID Crash & Recovery — a crash followed by a dramatic rebound.",
+    snarkDescription: "A crash. A rebound. A lesson.",
+    color: "yellow",
+    difficulty: "Easy",
+    riskFreeRate: 0.005,
+    // Uses covid-crash price data files so no new data download needed
+    dataSlug: "covid-crash",
+    events: [
+      { date: "2020-02-19", label: "Market Peak", description: "S&P 500 hits pre-crash all-time high." },
+      { date: "2020-03-23", label: "Market Bottom", description: "S&P 500 bottoms at -34% from peak." },
+      { date: "2020-03-27", label: "CARES Act", description: "$2.2 trillion stimulus package signed." },
+      { date: "2020-11-09", label: "Vaccine News", description: "Pfizer announces 90%+ effective vaccine." },
+    ],
+  },
 ];
 
 export function getScenario(slug: string): Scenario | undefined {

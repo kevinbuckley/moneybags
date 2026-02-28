@@ -621,3 +621,73 @@ describe("strategy: buy the dip (buy when market drops)", () => {
     expect(tradeOrders).toHaveLength(1);
   });
 });
+
+// ── trailing_stop_pct ─────────────────────────────────────────────────────────
+
+describe("trailing_stop_pct condition", () => {
+  it("fires when ticker has dropped >10% from its peak", () => {
+    // AAPL: $200 (day 0) → $220 (day 1, peak) → $190 (day 2, = -13.6% from peak)
+    const map: PriceDataMap = new Map();
+    map.set("AAPL", [
+      { date: "2020-01-01", open: 200, high: 205, low: 195, close: 200, volume: 1e6 },
+      { date: "2020-01-02", open: 218, high: 225, low: 215, close: 220, volume: 1e6 },
+      { date: "2020-01-03", open: 195, high: 196, low: 185, close: 190, volume: 1e6 },
+    ]);
+    const portfolio = makePortfolio(10_000, [makePosition("AAPL", 10, 190)]);
+    const rule = makeRule({
+      conditions: [cond("trailing_stop_pct", "gt", 10, "AAPL")],
+      action: { type: "sell_all", ticker: "AAPL" },
+    });
+    // currentDateIndex=2 means we're at the 3rd price point (close=190), peak was 220
+    const { firedRules } = evaluateRules(makeState(portfolio, 2), map, [rule]);
+    expect(firedRules).toHaveLength(1);
+  });
+
+  it("does not fire when still above stop threshold", () => {
+    // AAPL: $200 → $220 → $210 = -4.5% from peak (below 10% threshold)
+    const map: PriceDataMap = new Map();
+    map.set("AAPL", [
+      { date: "2020-01-01", open: 200, high: 205, low: 195, close: 200, volume: 1e6 },
+      { date: "2020-01-02", open: 218, high: 225, low: 215, close: 220, volume: 1e6 },
+      { date: "2020-01-03", open: 212, high: 215, low: 208, close: 210, volume: 1e6 },
+    ]);
+    const portfolio = makePortfolio(10_000, [makePosition("AAPL", 10, 210)]);
+    const rule = makeRule({
+      conditions: [cond("trailing_stop_pct", "gt", 10, "AAPL")],
+      action: { type: "sell_all", ticker: "AAPL" },
+    });
+    const { firedRules } = evaluateRules(makeState(portfolio, 2), map, [rule]);
+    expect(firedRules).toHaveLength(0);
+  });
+
+  it("returns 0 (no drop) when price is at or above the starting price", () => {
+    // AAPL: $200 → $210 — still trending up, no trailing drop
+    const map: PriceDataMap = new Map();
+    map.set("AAPL", [
+      { date: "2020-01-01", open: 200, high: 205, low: 195, close: 200, volume: 1e6 },
+      { date: "2020-01-02", open: 208, high: 215, low: 205, close: 210, volume: 1e6 },
+    ]);
+    const portfolio = makePortfolio(10_000, [makePosition("AAPL", 10, 210)]);
+    const rule = makeRule({
+      conditions: [cond("trailing_stop_pct", "gt", 5, "AAPL")],
+      action: { type: "sell_all", ticker: "AAPL" },
+    });
+    const { firedRules } = evaluateRules(makeState(portfolio, 1), map, [rule]);
+    expect(firedRules).toHaveLength(0);
+  });
+
+  it("returns null (no fire) when no ticker specified", () => {
+    const map: PriceDataMap = new Map();
+    map.set("AAPL", [
+      { date: "2020-01-01", open: 200, high: 205, low: 195, close: 200, volume: 1e6 },
+    ]);
+    const portfolio = makePortfolio(10_000);
+    const rule = makeRule({
+      // No ticker provided — should not fire
+      conditions: [{ subject: "trailing_stop_pct", operator: "gt", value: 5 }],
+      action: { type: "sell_all", ticker: "AAPL" },
+    });
+    const { firedRules } = evaluateRules(makeState(portfolio, 0), map, [rule]);
+    expect(firedRules).toHaveLength(0);
+  });
+});

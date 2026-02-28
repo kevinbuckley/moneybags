@@ -28,11 +28,13 @@ const SUBJECT_LABELS: Record<RuleSubject, string> = {
   cash_balance: "Cash Balance ($)",
   market_change_pct: "Market Change % (SPY)",
   days_elapsed: "Days Elapsed",
+  trailing_stop_pct: "Trailing Stop (% below peak)",
 };
 
 const SUBJECT_NEEDS_TICKER = new Set<RuleSubject>([
   "position_change_pct",
   "position_weight_pct",
+  "trailing_stop_pct",
 ]);
 
 const ACTION_LABELS: Record<RuleActionType, string> = {
@@ -359,6 +361,14 @@ function StepScenario() {
   );
 }
 
+/** Preset strategy presets keyed by name → [ticker, pct][] */
+const STRATEGY_PRESETS = [
+  { label: "All SPY", tickers: [["SPY", 100]] },
+  { label: "60/40 Classic", tickers: [["SPY", 60], ["TLT", 40]] },
+  { label: "Tech Heavy", tickers: [["QQQ", 50], ["AAPL", 25], ["MSFT", 25]] },
+  { label: "Equal Weight 3", tickers: [] as [string, number][] }, // filled dynamically
+] as const;
+
 function StepPortfolio() {
   const scenario = usePortfolioStore((s) => s.scenario);
   const startingCapital = usePortfolioStore((s) => s.startingCapital);
@@ -366,11 +376,14 @@ function StepPortfolio() {
   const addAllocation = usePortfolioStore((s) => s.addAllocation);
   const removeAllocation = usePortfolioStore((s) => s.removeAllocation);
   const updateAllocationPct = usePortfolioStore((s) => s.updateAllocationPct);
+  const setAllocations = usePortfolioStore((s) => s.setAllocations);
   const [search, setSearch] = useState("");
 
   const scenarioSlug = scenario?.slug ?? "";
+  // Use dataSlug (if set) so tutorial can reuse covid-crash instruments
+  const dataSlug = scenario?.dataSlug ?? scenarioSlug;
   const filtered = INSTRUMENTS.filter((inst) => {
-    if (!inst.availableScenarios.includes(scenarioSlug)) return false;
+    if (!inst.availableScenarios.includes(dataSlug)) return false;
     if (!search) return true;
     const q = search.toLowerCase();
     return (
@@ -383,6 +396,20 @@ function StepPortfolio() {
   const totalPct = allocations.reduce((s, a) => s + a.pct, 0);
   const totalOk = Math.abs(totalPct - 100) < 1.5;
 
+  // Available tickers in this scenario for preset validation
+  const availTickers = new Set(INSTRUMENTS.filter((i) => i.availableScenarios.includes(dataSlug)).map((i) => i.ticker));
+
+  const applyPreset = (tickers: ReadonlyArray<readonly [string, number]> | [string, number][]) => {
+    // Filter preset to only include instruments available in this scenario
+    const valid = (tickers as [string, number][]).filter(([t]) => availTickers.has(t));
+    if (valid.length === 0) return;
+    // Re-normalise pcts to sum to 100
+    const total = valid.reduce((s, [, p]) => s + p, 0);
+    setAllocations(valid.map(([ticker, pct]) => ({ ticker, pct: total > 0 ? (pct / total) * 100 : 100 / valid.length })));
+  };
+
+  const topThree = [...availTickers].slice(0, 3);
+
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -390,6 +417,33 @@ function StepPortfolio() {
         <p className="text-secondary text-sm">
           Select instruments and set allocations. Total should be 100%.
         </p>
+      </div>
+      {/* Quick strategy presets */}
+      <div>
+        <p className="text-muted text-xs font-mono uppercase tracking-wider mb-1.5">Quick strategies</p>
+        <div className="flex flex-wrap gap-1.5">
+          {STRATEGY_PRESETS.slice(0, 3).map((preset) => {
+            const hasAll = (preset.tickers as [string, number][]).every(([t]) => availTickers.has(t));
+            if (!hasAll) return null;
+            return (
+              <button
+                key={preset.label}
+                onClick={() => applyPreset(preset.tickers)}
+                className="text-xs px-3 py-1 rounded-full border border-border text-secondary hover:border-accent hover:text-accent transition-colors"
+              >
+                {preset.label}
+              </button>
+            );
+          })}
+          {topThree.length >= 3 && (
+            <button
+              onClick={() => applyPreset(topThree.map((t) => [t, 100 / topThree.length] as [string, number]))}
+              className="text-xs px-3 py-1 rounded-full border border-border text-secondary hover:border-accent hover:text-accent transition-colors"
+            >
+              Equal Weight
+            </button>
+          )}
+        </div>
       </div>
       <Input
         placeholder="Filter by ticker, name, or tag..."
@@ -487,7 +541,7 @@ function StepRules({ scenario }: { scenario: Scenario | null }) {
   const [form, setForm] = useState<RuleForm>({ ...BLANK_RULE_FORM, conditions: [{ ...BLANK_CONDITION }] });
 
   const scenarioTickers = INSTRUMENTS
-    .filter((i) => scenario ? i.availableScenarios.includes(scenario.slug) : false)
+    .filter((i) => scenario ? i.availableScenarios.includes(scenario.dataSlug ?? scenario.slug) : false)
     .map((i) => i.ticker);
 
   const openSheet = () => {
@@ -1008,11 +1062,26 @@ function StepReview({ launching }: { launching: boolean }) {
   );
 }
 
+interface ChallengeData {
+  scenarioSlug: string;
+  allocations: Array<{ ticker: string; pct: number }>;
+}
+
 // Isolated so that useSearchParams() is inside a Suspense boundary (Next.js requirement)
-function ChallengeDetector({ onChallenge }: { onChallenge: () => void }) {
+function ChallengeDetector({ onChallenge }: { onChallenge: (data: ChallengeData) => void }) {
   const searchParams = useSearchParams();
   useEffect(() => {
-    if (searchParams.get("challenge") === "1") onChallenge();
+    const s = searchParams.get("s");
+    const a = searchParams.get("a");
+    if (!s) return;
+    const allocations: Array<{ ticker: string; pct: number }> = [];
+    if (a) {
+      for (const part of a.split(",")) {
+        const [ticker, pct] = part.split(":");
+        if (ticker && pct) allocations.push({ ticker, pct: Number(pct) });
+      }
+    }
+    onChallenge({ scenarioSlug: s, allocations });
   }, []);
   return null;
 }
@@ -1025,6 +1094,7 @@ export default function SetupPage() {
 
   const scenario = usePortfolioStore((s) => s.scenario);
   const setScenario = usePortfolioStore((s) => s.setScenario);
+  const setAllocations = usePortfolioStore((s) => s.setAllocations);
   const startingCapital = usePortfolioStore((s) => s.startingCapital);
   const allocations = usePortfolioStore((s) => s.allocations);
   const rules = useRulesStore((s) => s.rules);
@@ -1056,7 +1126,7 @@ export default function SetupPage() {
       const tickers = allocations.map((a) => a.ticker);
       // Always include SPY for the benchmark overlay; loader handles missing gracefully
       const tickersWithSpy = tickers.includes("SPY") ? tickers : [...tickers, "SPY"];
-      const priceData = await loadPriceDataMap(tickersWithSpy, scenario.slug);
+      const priceData = await loadPriceDataMap(tickersWithSpy, scenario.dataSlug ?? scenario.slug);
       const config = {
         startingCapital,
         scenario,
@@ -1093,11 +1163,12 @@ export default function SetupPage() {
       {/* useSearchParams must live inside Suspense per Next.js App Router rules */}
       <Suspense>
         <ChallengeDetector
-          onChallenge={() => {
-            if (!scenario) {
-              const dailyIdx = Math.floor(Date.now() / 86400000) % SCENARIOS.length;
-              setScenario(SCENARIOS[dailyIdx]);
-              setStep(1);
+          onChallenge={({ scenarioSlug, allocations: challengeAllocs }) => {
+            const found = SCENARIOS.find((sc) => sc.slug === scenarioSlug);
+            if (found) {
+              setScenario(found);
+              if (challengeAllocs.length > 0) setAllocations(challengeAllocs);
+              setStep(2);
             }
           }}
         />
