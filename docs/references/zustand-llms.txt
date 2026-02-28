@@ -1,0 +1,85 @@
+ZUSTAND REFERENCE — MoneyBags
+
+Version: zustand@4.x
+Source: https://zustand.docs.pmnd.rs/
+
+BASIC PATTERN:
+```typescript
+// src/store/simulationStore.ts
+import { create } from 'zustand'
+import { SimulationState, TradeOrder } from '@/types/simulation'
+
+interface SimulationStore {
+  state: SimulationState | null
+  isPlaying: boolean
+  speed: 1 | 5 | 10
+  mode: 'movie' | 'step'
+  // actions
+  initSimulation: (config: SimulationConfig) => void
+  tick: () => void
+  play: () => void
+  pause: () => void
+  setSpeed: (speed: 1 | 5 | 10) => void
+  submitTrade: (order: TradeOrder) => void
+  reset: () => void
+}
+
+export const useSimulationStore = create<SimulationStore>((set, get) => ({
+  state: null,
+  isPlaying: false,
+  speed: 1,
+  mode: 'movie',
+  initSimulation: (config) => set({ state: initSimulationState(config) }),
+  tick: () => {
+    const { state } = get()
+    if (!state) return
+    const newState = advanceTick(state, priceDataMap)
+    set({ state: newState })
+  },
+  play: () => set({ isPlaying: true }),
+  pause: () => set({ isPlaying: false }),
+  setSpeed: (speed) => set({ speed }),
+  submitTrade: (order) => {
+    // add to pending trades, applied on next tick
+  },
+  reset: () => set({ state: null, isPlaying: false }),
+}))
+```
+
+LOCALSTORAGE PERSISTENCE (leaderboard only):
+```typescript
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+
+export const useLeaderboardStore = create(
+  persist(
+    (set, get) => ({
+      entries: [] as LeaderboardEntry[],
+      addEntry: (entry: LeaderboardEntry) =>
+        set((s) => ({ entries: [...s.entries, entry].slice(-50) })),
+    }),
+    { name: 'moneybags-leaderboard' }
+  )
+)
+```
+
+SUBSCRIBING IN COMPONENTS:
+```typescript
+// Select only what you need to minimize re-renders
+const isPlaying = useSimulationStore((s) => s.isPlaying)
+const portfolioValue = useSimulationStore((s) => s.state?.portfolio.totalValue ?? 0)
+```
+
+RULES:
+- Never put React or browser APIs in store logic
+- Store actions call engine functions (src/engine/) — no business logic in stores
+- Only leaderboardStore uses persist middleware
+- All other stores are ephemeral (reset on page reload)
+- Use shallow equality for object selections:
+  ```typescript
+  import { shallow } from 'zustand/shallow'
+  const { play, pause } = useSimulationStore(
+    (s) => ({ play: s.play, pause: s.pause }),
+    shallow
+  )
+  ```

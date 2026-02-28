@@ -1,0 +1,79 @@
+RECHARTS REFERENCE — MoneyBags
+
+Version: recharts@2.x (latest stable)
+Source: https://recharts.org/en-US/api
+
+KEY COMPONENTS USED IN MONEYBAGS:
+
+1. ResponsiveContainer
+   - Always wrap charts with this
+   - Use width="100%" and a fixed height (e.g., height={300})
+   - Required for mobile responsiveness
+
+2. ComposedChart
+   - Main chart component for portfolio value chart
+   - Accepts: Area, Line, Bar, ReferenceLine, XAxis, YAxis, Tooltip, Legend
+
+3. Area
+   - Used for portfolio value fill
+   - Props: dataKey, stroke, fill, fillOpacity, type="monotone", animationDuration
+   - For gain: stroke="#00d084", fill="#00d084", fillOpacity={0.1}
+   - For loss: use conditional coloring based on current value vs start
+
+4. Line
+   - Used for individual position overlays
+   - Props: dataKey, stroke, dot={false}, strokeWidth={1.5}
+
+5. ReferenceLine
+   - Used for historical event markers
+   - Props: x={date}, stroke="#1e1e2e", strokeDasharray="3 3", label={{ value: "Event", position: "top" }}
+
+6. XAxis
+   - dataKey="date"
+   - tickFormatter: format date strings to short labels (Jan '08, Mar '08)
+   - tick={{ fill: "#8888aa", fontSize: 10 }}
+   - axisLine={{ stroke: "#1e1e2e" }}
+
+7. YAxis
+   - tickFormatter: format as currency ($14.2k, $1.4M)
+   - tick={{ fill: "#8888aa", fontSize: 10 }}
+   - axisLine={false}
+   - tickLine={false}
+
+8. Tooltip
+   - Always use custom content component
+   - contentStyle={{ backgroundColor: "#13131a", border: "1px solid #1e1e2e", borderRadius: "8px" }}
+   - Example custom tooltip:
+     ```tsx
+     const CustomTooltip = ({ active, payload, label }) => {
+       if (!active || !payload?.length) return null;
+       return (
+         <div className="bg-surface border border-[#1e1e2e] rounded-lg p-3">
+           <p className="text-secondary text-xs">{label}</p>
+           <p className="text-primary font-mono font-bold">{formatCurrency(payload[0].value)}</p>
+         </div>
+       );
+     };
+     ```
+
+9. Animation
+   - animationDuration={300} for step mode (fast updates)
+   - animationDuration={1000} for movie mode initial render
+   - isAnimationActive={true}
+
+DARK MODE PATTERN:
+- Never rely on Recharts default colors
+- Always pass explicit stroke/fill colors using design tokens
+- Set cartesianGrid stroke="#1e1e2e"
+- All text elements: fill="#8888aa"
+
+PERFORMANCE:
+- Memoize data arrays passed to charts (useMemo)
+- Memoize custom tooltip/label components (React.memo)
+- Use dot={false} on Line for large datasets
+- Limit chart data points: downsample to max 500 points for movie mode
+
+MOBILE:
+- Touch events work out of box in Recharts 2.x
+- Use allowDataOverflow={false} on YAxis for clean mobile display
+- Reduce axis labels on mobile: use interval="preserveStartEnd" on XAxis

@@ -1,0 +1,73 @@
+NEXT.JS 14 REFERENCE — MoneyBags
+
+Version: next@14.x (App Router)
+Key decisions for this project:
+
+APP ROUTER CONVENTIONS:
+- All pages are in src/app/{route}/page.tsx
+- Root layout: src/app/layout.tsx
+- 'use client' directive required for: useState, useEffect, event handlers, Zustand stores, Recharts
+- Server components (no directive): static content, metadata, layout wrappers
+- All simulation/portfolio/results pages are 'use client' — heavy interactivity
+
+METADATA:
+```tsx
+// In layout.tsx or page.tsx (server component only)
+export const metadata = {
+  title: 'MoneyBags — Invest Fake Money',
+  description: 'Simulate famous market crashes with real financial instruments.',
+  openGraph: { ... }
+}
+```
+
+FONTS:
+```tsx
+// src/app/layout.tsx
+import { Inter, JetBrains_Mono } from 'next/font/google'
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
+const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' })
+```
+
+STATIC JSON DATA:
+- Files in public/ are served at /
+- Fetch in client components: fetch('/data/2008-crisis/SPY.json')
+- Cache with module-level Map in src/data/loaders.ts
+- No getStaticProps in App Router — use fetch() inside components
+
+SCRIPTS (AdSense):
+```tsx
+// src/app/layout.tsx
+import Script from 'next/script'
+<Script src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"
+        strategy="afterInteractive"
+        data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" />
+```
+
+NAVIGATION:
+```tsx
+import { useRouter } from 'next/navigation'  // client components
+import Link from 'next/link'                  // all components
+```
+
+IMAGE OPTIMIZATION:
+- Use next/image for any images (scenario cards, logo)
+- All images: explicit width/height or fill prop
+
+VERCEL DEPLOYMENT:
+- Zero config for Next.js 14 on Vercel
+- Environment variables set in Vercel dashboard
+- vercel.json only needed for headers (CSP)
+
+TAILWIND WITH APP ROUTER:
+- globals.css: import Tailwind, define CSS custom properties for design tokens
+- tailwind.config.ts: extend theme with custom colors matching DESIGN.md tokens
+- Dark mode: class strategy NOT needed (entire app is dark, no toggle)
+
+COMMON GOTCHAS:
+- Zustand stores must be initialized in 'use client' components
+- Cannot use hooks in Server Components
+- Dynamic imports: use next/dynamic for heavy components (Recharts)
+  ```tsx
+  const PortfolioChart = dynamic(() => import('@/components/charts/PortfolioChart'), { ssr: false })
+  ```
+- html2canvas: must be dynamically imported (browser-only)
