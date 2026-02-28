@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAnalytics } from "@/hooks/useAnalytics";
@@ -13,6 +13,16 @@ import { AnalyticsGrid } from "@/components/results/AnalyticsGrid";
 import { ShareCard } from "@/components/results/ShareCard";
 import { formatCurrency } from "@/lib/format";
 
+const GRADE_COLOR: Record<string, string> = {
+  "A+": "text-gain",
+  "A":  "text-gain",
+  "B+": "text-gain",
+  "B":  "text-accent",
+  "C":  "text-secondary",
+  "D":  "text-loss",
+  "F":  "text-loss",
+};
+
 export default function ResultsPage() {
   const router = useRouter();
   const analytics = useAnalytics();
@@ -21,12 +31,18 @@ export default function ResultsPage() {
   const resetPortfolio = usePortfolioStore((s) => s.reset);
   const resetRules = useRulesStore((s) => s.reset);
   const addEntry = useLeaderboardStore((s) => s.addEntry);
+  const updatePersonalBest = useLeaderboardStore((s) => s.updatePersonalBest);
+  const updateStreak = useLeaderboardStore((s) => s.updateStreak);
+  const personalBest = useLeaderboardStore((s) => s.personalBest);
+  const streak = useLeaderboardStore((s) => s.streak);
   const addedRef = useRef(false);
+  const [copied, setCopied] = useState(false);
 
-  // Add to leaderboard once when analytics become available
+  // Add to leaderboard, update streak + personal best — once per result
   useEffect(() => {
     if (!analytics || !state || addedRef.current) return;
     addedRef.current = true;
+
     addEntry({
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       scenarioSlug: state.config.scenario.slug,
@@ -37,7 +53,17 @@ export default function ResultsPage() {
       instruments: state.config.allocations.map((a) => a.ticker),
       simulatedAt: new Date().toISOString(),
     });
-  }, [analytics, state, addEntry]);
+
+    updatePersonalBest(analytics.totalReturnPct);
+    updateStreak(analytics.totalReturnPct >= 0);
+
+    // Confetti for big wins
+    if (analytics.totalReturnPct >= 0.2) {
+      import("canvas-confetti").then(({ default: confetti }) => {
+        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+      });
+    }
+  }, [analytics, state, addEntry, updatePersonalBest, updateStreak]);
 
   // Guard: no state → redirect to setup
   useEffect(() => {
@@ -51,6 +77,23 @@ export default function ResultsPage() {
     router.push("/setup");
   };
 
+  const handleCopy = () => {
+    if (!analytics || !state) return;
+    const ret = analytics.totalReturnPct * 100;
+    const sign = ret >= 0 ? "+" : "";
+    const hodl = analytics.hodlReturnPct * 100;
+    const beatHodl = ret > hodl;
+    const text = [
+      `I turned ${formatCurrency(analytics.startingValue)} into ${formatCurrency(analytics.finalValue)} (${sign}${ret.toFixed(1)}%) during the ${state.config.scenario.name}.`,
+      `Grade: ${analytics.grade}${beatHodl ? ` | Beat buy-and-hold by ${(ret - hodl).toFixed(1)}%` : ""}`,
+      "moneybags.app",
+    ].join("\n");
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
   if (!state) return null;
 
   const history = state.history;
@@ -62,6 +105,10 @@ export default function ResultsPage() {
     ? ((finalValue - startingValue) / startingValue) * 100
     : 0;
   const isGain = totalReturn >= 0;
+  const isShameMode = totalReturn <= -40;
+  const beatHodl = analytics
+    ? analytics.totalReturnPct > analytics.hodlReturnPct
+    : false;
 
   return (
     <main className="min-h-screen px-4 py-6 max-w-lg mx-auto pb-12">
@@ -70,16 +117,42 @@ export default function ResultsPage() {
         ← Home
       </Link>
 
+      {/* Streak badge */}
+      {streak >= 2 && (
+        <div className="mt-3 inline-flex items-center gap-1.5 bg-accent/10 border border-accent/30 rounded-full px-3 py-1">
+          <span className="text-sm">🔥</span>
+          <span className="text-xs font-semibold text-accent">{streak} run streak</span>
+        </div>
+      )}
+
       {/* Hero */}
-      <div className="text-center my-8">
+      <div className={`text-center my-8 ${isShameMode ? "opacity-90" : ""}`}>
+        {isShameMode && (
+          <p className="text-4xl mb-2">💀</p>
+        )}
         <p className="text-xs text-secondary font-mono mb-1">{scenarioName}</p>
-        <p className={`text-5xl font-bold font-mono mb-1 ${isGain ? "text-gain" : "text-loss"}`}>
-          {formatCurrency(finalValue)}
-        </p>
+
+        {/* Grade + value on same row */}
+        <div className="flex items-start justify-center gap-4">
+          <p className={`text-5xl font-bold font-mono mb-1 ${isGain ? "text-gain" : "text-loss"}`}>
+            {formatCurrency(finalValue)}
+          </p>
+          {analytics && (
+            <span className={`text-3xl font-bold font-mono mt-0.5 ${GRADE_COLOR[analytics.grade] ?? "text-secondary"}`}>
+              {analytics.grade}
+            </span>
+          )}
+        </div>
+
         <p className={`text-lg font-mono ${isGain ? "text-gain" : "text-loss"}`}>
           {isGain ? "+" : ""}{formatCurrency(finalValue - startingValue)}{" "}
           ({isGain ? "+" : ""}{totalReturn.toFixed(1)}%)
         </p>
+
+        {isShameMode && (
+          <p className="text-loss text-sm font-semibold mt-2">You did this to yourself.</p>
+        )}
+
         {analytics && (
           <p className="text-xs text-secondary mt-3 italic">
             {analytics.totalRulesFired > 0
@@ -89,7 +162,39 @@ export default function ResultsPage() {
               : "No rules. No trades. Pure vibes."}
           </p>
         )}
+
+        {/* Personal best */}
+        {personalBest && (
+          <p className="text-xs text-muted mt-1">
+            Your best: {personalBest.returnPct >= 0 ? "+" : ""}{(personalBest.returnPct * 100).toFixed(1)}%
+          </p>
+        )}
       </div>
+
+      {/* Beat the market banner */}
+      {beatHodl && analytics && (
+        <div className="bg-gain/10 border border-gain/30 rounded-xl px-4 py-3 mb-6 flex items-center justify-between">
+          <div>
+            <p className="text-gain text-sm font-semibold">You beat buy-and-hold 🎯</p>
+            <p className="text-xs text-secondary mt-0.5">
+              HODL would have returned {analytics.hodlReturnPct >= 0 ? "+" : ""}{(analytics.hodlReturnPct * 100).toFixed(1)}%
+            </p>
+          </div>
+          <span className="text-gain font-mono font-bold text-sm">
+            +{((analytics.totalReturnPct - analytics.hodlReturnPct) * 100).toFixed(1)}%
+          </span>
+        </div>
+      )}
+
+      {/* HODL comparison (when not beating it) */}
+      {!beatHodl && analytics && (
+        <div className="bg-elevated border border-border rounded-xl px-4 py-3 mb-6 flex items-center justify-between">
+          <p className="text-xs text-secondary">Buy-and-hold would have returned</p>
+          <span className={`font-mono font-bold text-sm ${analytics.hodlReturnPct >= 0 ? "text-gain" : "text-loss"}`}>
+            {analytics.hodlReturnPct >= 0 ? "+" : ""}{(analytics.hodlReturnPct * 100).toFixed(1)}%
+          </span>
+        </div>
+      )}
 
       {/* Full history chart */}
       <div className="mb-6">
@@ -139,6 +244,13 @@ export default function ResultsPage() {
 
       {/* Actions */}
       <div className="flex flex-col gap-3">
+        {/* Copy results */}
+        <button
+          onClick={handleCopy}
+          className="bg-elevated text-primary font-medium rounded-xl px-6 py-3 text-sm border border-border min-h-[44px] flex items-center justify-center hover:border-secondary transition-colors"
+        >
+          {copied ? "Copied! ✓" : "Copy Results"}
+        </button>
         <button
           onClick={handlePlayAgain}
           className="bg-accent text-white font-semibold rounded-xl px-6 py-3 text-sm min-h-[44px] flex items-center justify-center hover:bg-accent/90 transition-colors"
