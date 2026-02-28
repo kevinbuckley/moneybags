@@ -8,7 +8,7 @@ export const INSTRUMENTS: Instrument[] = [
   { ticker: "QQQ", name: "Invesco QQQ Trust", type: "etf", availableScenarios: ["2008-crisis", "dotcom-bubble", "covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "Tracks the NASDAQ-100", tags: ["index", "tech", "us"] },
   { ticker: "VTI", name: "Vanguard Total Stock Market ETF", type: "etf", availableScenarios: ["2008-crisis", "covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "Total US stock market", tags: ["index", "us"] },
   { ticker: "IWM", name: "iShares Russell 2000 ETF", type: "etf", availableScenarios: ["2008-crisis", "covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "Small-cap US stocks", tags: ["index", "small-cap", "us"] },
-  { ticker: "GLD", name: "SPDR Gold Shares", type: "etf", availableScenarios: ["2008-crisis", "dotcom-bubble", "covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "Gold bullion ETF", tags: ["commodity", "safe-haven"] },
+  { ticker: "GLD", name: "SPDR Gold Shares", type: "etf", availableScenarios: ["2008-crisis", "covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "Gold bullion ETF (launched 2004)", tags: ["commodity", "safe-haven"] },
   { ticker: "TLT", name: "iShares 20+ Year Treasury Bond ETF", type: "etf", availableScenarios: ["2008-crisis", "covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "Long-term US Treasuries", tags: ["bond", "safe-haven"] },
   { ticker: "TQQQ", name: "ProShares UltraPro QQQ", type: "leveraged", availableScenarios: ["covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "3x leveraged NASDAQ-100", tags: ["leveraged", "tech"] },
   { ticker: "SQQQ", name: "ProShares UltraPro Short QQQ", type: "leveraged", availableScenarios: ["covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "3x inverse NASDAQ-100", tags: ["leveraged", "inverse", "tech"] },
@@ -22,6 +22,7 @@ export const INSTRUMENTS: Instrument[] = [
   { ticker: "NFLX", name: "Netflix Inc.", type: "stock", availableScenarios: ["2008-crisis", "covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "Streaming entertainment", tags: ["tech", "large-cap"] },
   { ticker: "JPM", name: "JPMorgan Chase & Co.", type: "stock", availableScenarios: ["2008-crisis", "covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "Largest US bank", tags: ["financials", "large-cap"] },
   { ticker: "GS", name: "Goldman Sachs Group Inc.", type: "stock", availableScenarios: ["2008-crisis", "covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "Investment banking", tags: ["financials", "large-cap"] },
+  { ticker: "IBM", name: "International Business Machines", type: "stock", availableScenarios: ["black-monday"], description: "Blue-chip tech giant", tags: ["tech", "large-cap"] },
   // Crypto
   { ticker: "BTC", name: "Bitcoin", type: "crypto", availableScenarios: ["covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "The original cryptocurrency", tags: ["crypto", "volatile"] },
   { ticker: "ETH", name: "Ethereum", type: "crypto", availableScenarios: ["covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "Smart contract platform", tags: ["crypto", "volatile"] },
