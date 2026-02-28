@@ -235,21 +235,20 @@ function StepPortfolio() {
         </p>
       </div>
       <Input
-        placeholder="Search by ticker, name, or tag..."
+        placeholder="Filter by ticker, name, or tag..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
-      {search && (
-        <div className="flex flex-col gap-1 max-h-48 overflow-y-auto border border-border rounded-xl p-1">
-          {filtered.length === 0 && (
-            <p className="text-muted text-xs py-2 text-center">No instruments found</p>
-          )}
-          {filtered.map((inst) => {
+      <div className="flex flex-col gap-1 max-h-48 overflow-y-auto border border-border rounded-xl p-1">
+        {filtered.length === 0 ? (
+          <p className="text-muted text-xs py-2 text-center">No instruments match &ldquo;{search}&rdquo;</p>
+        ) : (
+          filtered.map((inst) => {
             const added = allocations.some((a) => a.ticker === inst.ticker);
             return (
               <button
                 key={inst.ticker}
-                onClick={() => { if (!added) addAllocation(inst.ticker); setSearch(""); }}
+                onClick={() => { if (!added) { addAllocation(inst.ticker); setSearch(""); } }}
                 disabled={added}
                 className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-elevated text-left disabled:opacity-40 transition-colors"
               >
@@ -260,12 +259,12 @@ function StepPortfolio() {
                 <Badge variant="neutral" className="shrink-0">{inst.type}</Badge>
               </button>
             );
-          })}
-        </div>
-      )}
+          })
+        )}
+      </div>
       {allocations.length === 0 ? (
-        <p className="text-muted text-xs text-center py-4">
-          Search above to add instruments to your portfolio
+        <p className="text-muted text-xs text-center py-1">
+          Tap any instrument above to add it
         </p>
       ) : (
         <div className="flex flex-col gap-2">
