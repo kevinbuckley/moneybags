@@ -23,6 +23,10 @@ export function PortfolioPanel() {
   const history = state?.history ?? [];
   const startingValue = portfolio?.startingValue ?? 0;
   const totalValue = portfolio?.totalValue ?? startingValue;
+  const investedValue = portfolio
+    ? portfolio.positions.reduce((s, p) => s + p.currentValue, 0)
+    : 0;
+  const investedPct = totalValue > 0 ? (investedValue / totalValue) * 100 : 0;
   const prevDayValue = history[history.length - 2]?.totalValue ?? startingValue;
   const dayChange = totalValue - prevDayValue;
   const dayChangePct = prevDayValue > 0 ? (dayChange / prevDayValue) * 100 : 0;
@@ -73,6 +77,28 @@ export function PortfolioPanel() {
                 {totalReturn >= 0 ? "+" : ""}{totalReturn.toFixed(1)}% total
               </span>
             </div>
+            {/* Invested vs cash breakdown — prevents confusion between position value and portfolio total */}
+            {portfolio && (portfolio.cashBalance > 0.01 || investedValue > 0) && (
+              <div className="mt-1.5">
+                <p className="text-xs text-muted font-mono">
+                  Stocks{" "}
+                  <span className="text-secondary">{formatCurrency(investedValue, true)}</span>
+                  {portfolio.cashBalance > 0.01 && (
+                    <>
+                      {" · "}Cash{" "}
+                      <span className="text-secondary">{formatCurrency(portfolio.cashBalance, true)}</span>
+                    </>
+                  )}
+                </p>
+                {/* Allocation bar: accent = invested, border = cash */}
+                <div className="h-1 rounded-full bg-border mt-1 overflow-hidden">
+                  <div
+                    className="h-full bg-accent rounded-full transition-all duration-300"
+                    style={{ width: `${Math.min(investedPct, 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
           <button
             onClick={() => openTrade(null)}
