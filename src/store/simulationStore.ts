@@ -52,7 +52,8 @@ export const useSimulationStore = create<SimulationStore>((set, get) => ({
   tick: () => {
     const { state, priceData } = get();
     if (!state || !priceData || state.isComplete) return;
-    const newState = advanceTick(state, priceData, state.pendingTrades);
+    // advanceTick reads state.pendingTrades internally — don't pass it again
+    const newState = advanceTick(state, priceData);
     set({ state: newState });
   },
 
