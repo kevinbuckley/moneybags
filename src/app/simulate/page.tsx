@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSimulation } from "@/hooks/useSimulation";
 import { useSimulationStore } from "@/store/simulationStore";
@@ -15,6 +15,16 @@ export default function SimulatePage() {
   useSimulation(); // drives the playback interval
 
   const state = useSimulationStore((s) => s.state);
+  const play = useSimulationStore((s) => s.play);
+  const hasAutoStarted = useRef(false);
+
+  // Auto-start at 1x speed when state is ready
+  useEffect(() => {
+    if (state && !hasAutoStarted.current) {
+      hasAutoStarted.current = true;
+      play();
+    }
+  }, [state, play]);
 
   // Redirect to results 1s after simulation completes
   useEffect(() => {

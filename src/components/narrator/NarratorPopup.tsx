@@ -28,7 +28,7 @@ export function NarratorPopup() {
 
   return (
     <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 w-72">
-      {activePopups.slice(-3).map((popup) => (
+      {activePopups.slice(-1).map((popup) => (
         <button
           key={popup.id}
           onClick={() => dismissPopup(popup.id)}
