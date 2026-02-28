@@ -14,4 +14,6 @@ export interface SimulationAnalytics {
   worstDayDate: string;
   totalManualTrades: number;
   totalRulesFired: number;
+  hodlReturnPct: number;  // buy-and-hold return with same initial allocation
+  grade: string;          // "A+" | "A" | "B+" | "B" | "C" | "D" | "F"
 }

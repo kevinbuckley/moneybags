@@ -58,6 +58,8 @@ export function computeAnalytics(
     worstDayDate: worstDay.date,
     totalManualTrades: 0, // TODO: count from trade log
     totalRulesFired: 0, // TODO: count from rules log
+    hodlReturnPct: 0, // computed in useAnalytics (needs priceData)
+    grade: "F",       // computed in useAnalytics after hodl + sharpe known
   };
 }
 
@@ -76,5 +78,7 @@ function emptyAnalytics(value: number): SimulationAnalytics {
     worstDayDate: "",
     totalManualTrades: 0,
     totalRulesFired: 0,
+    hodlReturnPct: 0,
+    grade: "F",
   };
 }
