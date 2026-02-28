@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSimulation } from "@/hooks/useSimulation";
 import { useSimulationStore } from "@/store/simulationStore";
@@ -8,7 +8,7 @@ import { PortfolioChart } from "@/components/charts/PortfolioChart";
 import { NarratorPopup } from "@/components/narrator/NarratorPopup";
 import { PlaybackControls } from "@/components/simulation/PlaybackControls";
 import { PortfolioPanel } from "@/components/simulation/PortfolioPanel";
-import { AdBanner } from "@/components/ads/AdBanner";
+import { AdInterstitial } from "@/components/ads/AdInterstitial";
 
 export default function SimulatePage() {
   const router = useRouter();
@@ -17,16 +17,17 @@ export default function SimulatePage() {
   const state = useSimulationStore((s) => s.state);
   const play = useSimulationStore((s) => s.play);
   const hasAutoStarted = useRef(false);
+  const [adDismissed, setAdDismissed] = useState(false);
 
-  // Auto-start at 1x speed when state is ready
+  // Auto-start only after ad is dismissed
   useEffect(() => {
-    if (state && !hasAutoStarted.current) {
+    if (state && adDismissed && !hasAutoStarted.current) {
       hasAutoStarted.current = true;
       play();
     }
-  }, [state, play]);
+  }, [state, adDismissed, play]);
 
-  // Redirect to results 1s after simulation completes
+  // Redirect to results 1.5s after simulation completes
   useEffect(() => {
     if (state?.isComplete) {
       const t = setTimeout(() => router.push("/results"), 1500);
@@ -46,8 +47,8 @@ export default function SimulatePage() {
 
   return (
     <main className="h-dvh flex flex-col overflow-hidden">
-      {/* Ad banner */}
-      <AdBanner className="px-2 pt-2" />
+      {/* Full-page ad shown before simulation starts */}
+      {!adDismissed && <AdInterstitial onDismiss={() => setAdDismissed(true)} />}
 
       {/* Portfolio header */}
       <PortfolioPanel />
