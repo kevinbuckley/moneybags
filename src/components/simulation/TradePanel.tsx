@@ -39,11 +39,15 @@ export function TradePanel({ open, onClose, defaultTicker }: TradePanelProps) {
   }, [open, defaultTicker]);
 
   const portfolio = state?.portfolio;
-  const positions = portfolio?.positions ?? [];
+  // Exclude option positions — options are managed via the dedicated Close button in PortfolioPanel
+  const positions = (portfolio?.positions ?? []).filter((p) => p.type !== "option");
   const tickers = positions.map((p) => p.ticker);
 
   const selectedPos = positions.find((p) => p.ticker === ticker);
   const cashBalance = portfolio?.cashBalance ?? 0;
+  const reservedCash = portfolio?.reservedCash ?? 0;
+  // Free cash is what's actually spendable (cashBalance minus collateral reserved for short puts)
+  const freeCash = Math.max(0, cashBalance - reservedCash);
 
   const handleSubmit = () => {
     if (!ticker && action !== "move_to_cash") return;
@@ -131,7 +135,7 @@ export function TradePanel({ open, onClose, defaultTicker }: TradePanelProps) {
             <p className="text-xs text-secondary font-medium mb-2">
               Dollar amount{" "}
               <span className="text-muted">
-                (cash: {formatCurrency(cashBalance)})
+                (free cash: {formatCurrency(freeCash)})
               </span>
             </p>
             <Input
@@ -146,7 +150,7 @@ export function TradePanel({ open, onClose, defaultTicker }: TradePanelProps) {
               {[25, 50, 100].map((pct) => (
                 <button
                   key={pct}
-                  onClick={() => setAmount(String(Math.floor((cashBalance * pct) / 100)))}
+                  onClick={() => setAmount(String(Math.floor((freeCash * pct) / 100)))}
                   className="flex-1 text-xs text-secondary border border-border rounded-lg py-1 hover:border-secondary transition-colors"
                 >
                   {pct}%
