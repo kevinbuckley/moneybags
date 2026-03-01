@@ -4,8 +4,8 @@ import type { Instrument } from "@/types/instrument";
 
 export const INSTRUMENTS: Instrument[] = [
   // ETFs
-  { ticker: "SPY", name: "SPDR S&P 500 ETF", type: "etf", availableScenarios: ["2008-crisis", "dotcom-bubble", "covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "Tracks the S&P 500 index", tags: ["index", "large-cap", "us"] },
-  { ticker: "QQQ", name: "Invesco QQQ Trust", type: "etf", availableScenarios: ["2008-crisis", "dotcom-bubble", "covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "Tracks the NASDAQ-100", tags: ["index", "tech", "us"] },
+  { ticker: "SPY", name: "SPDR S&P 500 ETF", type: "etf", availableScenarios: ["2008-crisis", "dotcom-bubble", "dotcom-recovery", "covid-crash", "2021-bull-run", "2022-crypto-winter", "2023-ai-boom"], description: "Tracks the S&P 500 index", tags: ["index", "large-cap", "us"] },
+  { ticker: "QQQ", name: "Invesco QQQ Trust", type: "etf", availableScenarios: ["2008-crisis", "dotcom-bubble", "dotcom-recovery", "covid-crash", "2021-bull-run", "2022-crypto-winter", "2023-ai-boom"], description: "Tracks the NASDAQ-100", tags: ["index", "tech", "us"] },
   { ticker: "VTI", name: "Vanguard Total Stock Market ETF", type: "etf", availableScenarios: ["2008-crisis", "covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "Total US stock market", tags: ["index", "us"] },
   { ticker: "IWM", name: "iShares Russell 2000 ETF", type: "etf", availableScenarios: ["2008-crisis", "covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "Small-cap US stocks", tags: ["index", "small-cap", "us"] },
   { ticker: "GLD", name: "SPDR Gold Shares", type: "etf", availableScenarios: ["2008-crisis", "covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "Gold bullion ETF (launched 2004)", tags: ["commodity", "safe-haven"] },
@@ -13,13 +13,14 @@ export const INSTRUMENTS: Instrument[] = [
   { ticker: "TQQQ", name: "ProShares UltraPro QQQ", type: "leveraged", availableScenarios: ["covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "3x leveraged NASDAQ-100", tags: ["leveraged", "tech"] },
   { ticker: "SQQQ", name: "ProShares UltraPro Short QQQ", type: "leveraged", availableScenarios: ["covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "3x inverse NASDAQ-100", tags: ["leveraged", "inverse", "tech"] },
   // Stocks
-  { ticker: "AAPL", name: "Apple Inc.", type: "stock", availableScenarios: ["2008-crisis", "dotcom-bubble", "covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "Consumer electronics and software", tags: ["tech", "large-cap"] },
-  { ticker: "MSFT", name: "Microsoft Corporation", type: "stock", availableScenarios: ["2008-crisis", "dotcom-bubble", "covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "Software and cloud computing", tags: ["tech", "large-cap"] },
-  { ticker: "AMZN", name: "Amazon.com Inc.", type: "stock", availableScenarios: ["2008-crisis", "dotcom-bubble", "covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "E-commerce and cloud services", tags: ["tech", "large-cap"] },
-  { ticker: "TSLA", name: "Tesla Inc.", type: "stock", availableScenarios: ["covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "Electric vehicles and energy", tags: ["ev", "large-cap", "volatile"] },
-  { ticker: "NVDA", name: "NVIDIA Corporation", type: "stock", availableScenarios: ["covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "GPUs and AI chips", tags: ["tech", "semiconductor"] },
+  { ticker: "AAPL", name: "Apple Inc.", type: "stock", availableScenarios: ["2008-crisis", "dotcom-bubble", "dotcom-recovery", "covid-crash", "2021-bull-run", "2022-crypto-winter", "2023-ai-boom"], description: "Consumer electronics and software", tags: ["tech", "large-cap"] },
+  { ticker: "MSFT", name: "Microsoft Corporation", type: "stock", availableScenarios: ["2008-crisis", "dotcom-bubble", "dotcom-recovery", "covid-crash", "2021-bull-run", "2022-crypto-winter", "2023-ai-boom"], description: "Software and cloud computing", tags: ["tech", "large-cap"] },
+  { ticker: "AMZN", name: "Amazon.com Inc.", type: "stock", availableScenarios: ["2008-crisis", "dotcom-bubble", "dotcom-recovery", "covid-crash", "2021-bull-run", "2022-crypto-winter", "2023-ai-boom"], description: "E-commerce and cloud services", tags: ["tech", "large-cap"] },
+  { ticker: "TSLA", name: "Tesla Inc.", type: "stock", availableScenarios: ["covid-crash", "2021-bull-run", "2022-crypto-winter", "2023-ai-boom"], description: "Electric vehicles and energy", tags: ["ev", "large-cap", "volatile"] },
+  { ticker: "NVDA", name: "NVIDIA Corporation", type: "stock", availableScenarios: ["covid-crash", "2021-bull-run", "2022-crypto-winter", "2023-ai-boom"], description: "GPUs and AI chips", tags: ["tech", "semiconductor", "ai"] },
+  { ticker: "META", name: "Meta Platforms Inc.", type: "stock", availableScenarios: ["2023-ai-boom"], description: "Social media and VR/AR; 'Year of Efficiency' turnaround", tags: ["tech", "large-cap", "ai"] },
   { ticker: "GME", name: "GameStop Corp.", type: "stock", availableScenarios: ["2021-bull-run"], description: "Video game retailer turned meme stock", tags: ["meme", "volatile"] },
-  { ticker: "NFLX", name: "Netflix Inc.", type: "stock", availableScenarios: ["2008-crisis", "covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "Streaming entertainment", tags: ["tech", "large-cap"] },
+  { ticker: "NFLX", name: "Netflix Inc.", type: "stock", availableScenarios: ["2008-crisis", "dotcom-recovery", "covid-crash", "2021-bull-run", "2022-crypto-winter", "2023-ai-boom"], description: "Streaming entertainment", tags: ["tech", "large-cap"] },
   { ticker: "JPM", name: "JPMorgan Chase & Co.", type: "stock", availableScenarios: ["2008-crisis", "covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "Largest US bank", tags: ["financials", "large-cap"] },
   { ticker: "GS", name: "Goldman Sachs Group Inc.", type: "stock", availableScenarios: ["2008-crisis", "covid-crash", "2021-bull-run", "2022-crypto-winter"], description: "Investment banking", tags: ["financials", "large-cap"] },
   { ticker: "IBM", name: "International Business Machines", type: "stock", availableScenarios: ["black-monday"], description: "Blue-chip tech giant", tags: ["tech", "large-cap"] },
