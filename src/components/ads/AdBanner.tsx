@@ -32,7 +32,7 @@ export function AdBanner({ className = "" }: AdBannerProps) {
       <p className="text-xs text-muted text-center mb-1">Advertisement</p>
       <ins
         className="adsbygoogle"
-        style={{ display: "block" }}
+        style={{ display: "block", minHeight: 60 }}
         data-ad-client={PUB_ID}
         data-ad-slot={SLOT_ID}
         data-ad-format="auto"

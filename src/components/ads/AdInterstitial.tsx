@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const PUB_ID = "ca-pub-2954508563135581";
 const SLOT_ID = "4359398745";
@@ -12,6 +12,8 @@ interface AdInterstitialProps {
 
 export function AdInterstitial({ onDismiss }: AdInterstitialProps) {
   const [seconds, setSeconds] = useState(COUNTDOWN_SEC);
+  const [adFailed, setAdFailed] = useState(false);
+  const insRef = useRef<HTMLModElement>(null);
   const isDev = process.env.NODE_ENV === "development";
 
   // Push the ad unit once on mount
@@ -23,6 +25,18 @@ export function AdInterstitial({ onDismiss }: AdInterstitialProps) {
     } catch {
       // ad blocked or not loaded
     }
+  }, [isDev]);
+
+  // Detect whether the <ins> element filled — if still 0px tall after 2s, show fallback
+  useEffect(() => {
+    if (isDev) return;
+    const timer = setTimeout(() => {
+      const el = insRef.current;
+      if (!el || el.clientHeight < 2) {
+        setAdFailed(true);
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
   }, [isDev]);
 
   // Countdown timer
@@ -58,8 +72,18 @@ export function AdInterstitial({ onDismiss }: AdInterstitialProps) {
           <div className="w-full max-w-md h-64 border border-dashed border-border rounded-xl flex items-center justify-center">
             <span className="text-xs text-muted">Full-page ad ({SLOT_ID})</span>
           </div>
+        ) : adFailed ? (
+          /* Fallback when ad doesn't load (ad blocker, not yet approved, etc.) */
+          <div className="w-full max-w-md text-center py-12 px-6">
+            <p className="text-4xl mb-4">💰</p>
+            <p className="text-primary font-semibold text-lg mb-2">Mr. Moneybags</p>
+            <p className="text-secondary text-sm leading-relaxed">
+              Simulate real market crashes with fake money. No losses. No lessons learned. Pure chaos.
+            </p>
+          </div>
         ) : (
           <ins
+            ref={insRef}
             className="adsbygoogle"
             style={{ display: "block", width: "100%", maxWidth: 480, minHeight: 280 }}
             data-ad-client={PUB_ID}

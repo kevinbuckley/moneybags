@@ -13,7 +13,7 @@ const SCENARIO_EMOJI: Record<string, string> = {
   "dotcom-recovery": "🟢",
   "2022-rate-hike": "🔴",
   "the-future": "🔮",
-  "tutorial": "🎓",
+  "2025-tariff-shock": "💥",
 };
 
 const SCENARIO_BADGE: Record<string, string> = {

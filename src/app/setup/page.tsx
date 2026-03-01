@@ -491,7 +491,7 @@ function StepPortfolio() {
   const [search, setSearch] = useState("");
 
   const scenarioSlug = scenario?.slug ?? "";
-  // Use dataSlug (if set) so tutorial can reuse covid-crash instruments
+  // Use dataSlug (if set) for scenarios that share data files with another scenario
   const dataSlug = scenario?.dataSlug ?? scenarioSlug;
   const filtered = INSTRUMENTS.filter((inst) => {
     if (!inst.availableScenarios.includes(dataSlug)) return false;
