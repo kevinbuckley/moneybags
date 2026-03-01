@@ -39,18 +39,18 @@ function generateTradingDates(startStr, count) {
 
 // ── GBM parameters (approximate starting prices for Mar 2026) ─────────────────
 const INSTRUMENTS = {
-  SPY:  { start: 580,   mu: 0.10, sigma: 0.16 },
-  QQQ:  { start: 490,   mu: 0.12, sigma: 0.20 },
-  NVDA: { start: 125,   mu: 0.22, sigma: 0.48 },
-  AAPL: { start: 240,   mu: 0.10, sigma: 0.24 },
-  MSFT: { start: 415,   mu: 0.12, sigma: 0.22 },
-  AMZN: { start: 225,   mu: 0.13, sigma: 0.24 },
-  TSLA: { start: 280,   mu: 0.08, sigma: 0.58 },
-  META: { start: 660,   mu: 0.14, sigma: 0.30 },
-  BTC:  { start: 87000, mu: 0.28, sigma: 0.72 },
-  ETH:  { start: 3100,  mu: 0.22, sigma: 0.78 },
-  TLT:  { start: 87,    mu: -0.01, sigma: 0.10 },
-  GLD:  { start: 295,   mu: 0.06, sigma: 0.13 },
+  SPY:  { start: 580,   mu: 0.10, sigma: 0.16, type: "etf",     name: "SPDR S&P 500 ETF" },
+  QQQ:  { start: 490,   mu: 0.12, sigma: 0.20, type: "etf",     name: "Invesco QQQ Trust" },
+  NVDA: { start: 125,   mu: 0.22, sigma: 0.48, type: "stock",   name: "NVIDIA Corporation" },
+  AAPL: { start: 240,   mu: 0.10, sigma: 0.24, type: "stock",   name: "Apple Inc." },
+  MSFT: { start: 415,   mu: 0.12, sigma: 0.22, type: "stock",   name: "Microsoft Corporation" },
+  AMZN: { start: 225,   mu: 0.13, sigma: 0.24, type: "stock",   name: "Amazon.com Inc." },
+  TSLA: { start: 280,   mu: 0.08, sigma: 0.58, type: "stock",   name: "Tesla Inc." },
+  META: { start: 660,   mu: 0.14, sigma: 0.30, type: "stock",   name: "Meta Platforms Inc." },
+  BTC:  { start: 87000, mu: 0.28, sigma: 0.72, type: "crypto",  name: "Bitcoin" },
+  ETH:  { start: 3100,  mu: 0.22, sigma: 0.78, type: "crypto",  name: "Ethereum" },
+  TLT:  { start: 87,    mu: -0.01, sigma: 0.10, type: "etf",    name: "iShares 20+ Year Treasury Bond ETF" },
+  GLD:  { start: 295,   mu: 0.06, sigma: 0.13, type: "etf",     name: "SPDR Gold Shares" },
 };
 
 // ── Events (day index → per-ticker price multiplier applied at close) ──────────
@@ -176,7 +176,18 @@ for (const [ticker, params] of Object.entries(INSTRUMENTS)) {
     prevClose = close;
   }
 
-  writeFileSync(join(OUT_DIR, `${ticker}.json`), JSON.stringify(data, null, 2));
+  // Wrap in the same envelope shape the loader expects: { ticker, name, type, scenario, series }
+  const output = {
+    ticker,
+    name: params.name,
+    type: params.type,
+    scenario: "the-future",
+    startDate: dates[0],
+    endDate: dates[dates.length - 1],
+    currency: "USD",
+    series: data,
+  };
+  writeFileSync(join(OUT_DIR, `${ticker}.json`), JSON.stringify(output, null, 2));
   const last = data[data.length - 1];
   const pct = ((last.close - start) / start * 100).toFixed(1);
   console.log(`  ✓ ${ticker.padEnd(5)} ${start.toFixed(2).padStart(8)} → ${last.close.toFixed(2).padStart(8)}  (${pct.padStart(7)}%)`);
