@@ -216,9 +216,15 @@ describe("condition: days_elapsed", () => {
 
 describe("condition: portfolio_change_pct", () => {
   it("fires when portfolio drops below threshold vs prev snapshot", () => {
-    // Portfolio was $10k yesterday, now $9k = −10% change
+    // Portfolio was $10k two days ago (history[-2]), dropped to $9k "yesterday"
+    // (history[-1] + portfolio.totalValue). Rule fires: −10% < −5% threshold.
+    // Two snapshots required because the fix compares portfolio.totalValue vs history[-2]
+    // (history[-1] == portfolio.totalValue, the actual tick hasn't run yet).
     const portfolio = makePortfolio(9_000);
-    const history = [makeSnapshot(10_000)];
+    const history = [
+      makeSnapshot(10_000),  // history[-2]: reference (two days ago)
+      makeSnapshot(9_000),   // history[-1]: yesterday's close = current portfolio value
+    ];
     const rule = makeRule({
       conditions: [cond("portfolio_change_pct", "lte", -5)],
       action: { type: "move_to_cash" },
@@ -246,10 +252,14 @@ describe("condition: portfolio_change_pct", () => {
 
 describe("condition: position_change_pct", () => {
   it("fires when position gains above threshold", () => {
-    // AAPL prev value $1000, now $1600 = +60%
+    // AAPL: two days ago $1000 (history[-2]), yesterday $1600 (history[-1] + current).
+    // Change = +60%, threshold = 50% → fires.
     const portfolio = makePortfolio(0, [makePosition("AAPL", 16, 100)]);
     portfolio.positions[0].currentValue = 1_600;
-    const history = [makeSnapshot(10_000, [{ ticker: "AAPL", value: 1_000 }])];
+    const history = [
+      makeSnapshot(10_000, [{ ticker: "AAPL", value: 1_000 }]), // history[-2]: reference
+      makeSnapshot(10_000, [{ ticker: "AAPL", value: 1_600 }]), // history[-1]: yesterday = current
+    ];
     const rule = makeRule({
       conditions: [cond("position_change_pct", "gte", 50, "AAPL")],
       action: { type: "sell_all", ticker: "AAPL" },
@@ -429,8 +439,12 @@ describe("multiple conditions (AND logic)", () => {
 
 describe("strategy: daily loss limit (move_to_cash)", () => {
   it("fires move_to_cash when portfolio drops 5% in a day", () => {
-    const portfolio = makePortfolio(9_400); // from $10k → $9.4k = −6%
-    const history = [makeSnapshot(10_000)];
+    // $10k two days ago (history[-2]) → $9.4k yesterday (history[-1] + portfolio) = −6%
+    const portfolio = makePortfolio(9_400);
+    const history = [
+      makeSnapshot(10_000),  // history[-2]: reference
+      makeSnapshot(9_400),   // history[-1]: yesterday's close = current portfolio value
+    ];
     const rule = makeRule({
       label: "Daily loss limit",
       conditions: [cond("portfolio_change_pct", "lte", -5)],
@@ -462,10 +476,13 @@ describe("strategy: daily loss limit (move_to_cash)", () => {
 
 describe("strategy: take profit (sell_all when position up)", () => {
   it("fires sell_all when position has gained more than threshold", () => {
-    // AAPL: prev snapshot $1000, current $1600 = +60%
+    // AAPL: two days ago $1000 (history[-2]) → yesterday $1600 (history[-1] + current) = +60%
     const portfolio = makePortfolio(0, [makePosition("AAPL", 16, 100)]);
     portfolio.positions[0].currentValue = 1_600;
-    const history = [makeSnapshot(10_000, [{ ticker: "AAPL", value: 1_000 }])];
+    const history = [
+      makeSnapshot(10_000, [{ ticker: "AAPL", value: 1_000 }]), // history[-2]: reference
+      makeSnapshot(10_000, [{ ticker: "AAPL", value: 1_600 }]), // history[-1]: yesterday = current
+    ];
     const rule = makeRule({
       label: "Take profit AAPL",
       conditions: [cond("position_change_pct", "gte", 50, "AAPL")],
@@ -497,10 +514,13 @@ describe("strategy: take profit (sell_all when position up)", () => {
 
 describe("strategy: cut losses (sell_all when position down)", () => {
   it("fires sell_all when position has dropped past threshold", () => {
-    // AAPL: prev snapshot $1000, current $750 = −25%
+    // AAPL: two days ago $1000 (history[-2]) → yesterday $750 (history[-1] + current) = −25%
     const portfolio = makePortfolio(0, [makePosition("AAPL", 10, 75)]);
     portfolio.positions[0].currentValue = 750;
-    const history = [makeSnapshot(10_000, [{ ticker: "AAPL", value: 1_000 }])];
+    const history = [
+      makeSnapshot(10_000, [{ ticker: "AAPL", value: 1_000 }]), // history[-2]: reference
+      makeSnapshot(10_000, [{ ticker: "AAPL", value: 750 }]),   // history[-1]: yesterday = current
+    ];
     const rule = makeRule({
       label: "Cut losses AAPL",
       conditions: [cond("position_change_pct", "lte", -20, "AAPL")],

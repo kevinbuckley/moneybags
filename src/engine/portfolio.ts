@@ -252,12 +252,14 @@ function applyShortCall(
     },
   };
 
-  const callCollateral = strike * 100 * numContracts;
+  // Covered calls are collateralized by the underlying shares, not cash.
+  // Naked calls have no hard cash reservation enforced in this game (UI warns).
+  // Either way we don't touch reservedCash — the negative currentValue of the
+  // position already reflects the liability on the portfolio.
   const newCash = portfolio.cashBalance + premium;
-  const newReservedCash = portfolio.reservedCash + callCollateral;
   const positions = [...portfolio.positions, newPos];
   const totalPositionValue = positions.reduce((s, p) => s + p.currentValue, 0);
-  return { ...portfolio, positions, cashBalance: newCash, reservedCash: newReservedCash, totalValue: newCash + totalPositionValue };
+  return { ...portfolio, positions, cashBalance: newCash, totalValue: newCash + totalPositionValue };
 }
 
 /**

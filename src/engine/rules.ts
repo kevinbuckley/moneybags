@@ -43,7 +43,6 @@ function getConditionValue(
   priceData: PriceDataMap
 ): number | null {
   const { portfolio, history, currentDateIndex } = state;
-  const prevSnapshot = history[history.length - 1];
 
   switch (condition.subject) {
     case "portfolio_value":
@@ -56,15 +55,22 @@ function getConditionValue(
       return currentDateIndex;
 
     case "portfolio_change_pct": {
-      if (!prevSnapshot || prevSnapshot.totalValue === 0) return 0;
-      return ((portfolio.totalValue - prevSnapshot.totalValue) / prevSnapshot.totalValue) * 100;
+      // portfolio.totalValue at rule-evaluation time reflects yesterday's close (recomputeValues
+      // hasn't run yet for today's tick). prevSnapshot (history[-1]) was also built after
+      // yesterday's recomputeValues, so comparing the two always yields 0.
+      // Use history[-2] (day-before-yesterday) so we capture the actual prior-day change.
+      const prevPrevSnapshot = history.length >= 2 ? history[history.length - 2] : null;
+      if (!prevPrevSnapshot || prevPrevSnapshot.totalValue === 0) return 0;
+      return ((portfolio.totalValue - prevPrevSnapshot.totalValue) / prevPrevSnapshot.totalValue) * 100;
     }
 
     case "position_change_pct": {
       if (!condition.ticker) return null;
       const pos = portfolio.positions.find((p) => p.ticker === condition.ticker);
       if (!pos) return null;
-      const prevPos = prevSnapshot?.positions.find((p) => p.ticker === condition.ticker);
+      // Same timing issue as portfolio_change_pct: use history[-2] for the reference value.
+      const prevPrevSnapshot = history.length >= 2 ? history[history.length - 2] : null;
+      const prevPos = prevPrevSnapshot?.positions.find((p) => p.ticker === condition.ticker);
       if (!prevPos || prevPos.value === 0) return 0;
       return ((pos.currentValue - prevPos.value) / prevPos.value) * 100;
     }

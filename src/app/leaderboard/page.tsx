@@ -143,7 +143,7 @@ export default function LeaderboardPage() {
               {/* Return */}
               <div className="text-right shrink-0">
                 <p className={`font-mono font-bold text-lg ${RETURN_COLOR(entry.returnPct)}`}>
-                  {entry.returnPct >= 0 ? "+" : ""}{entry.returnPct.toFixed(1)}%
+                  {entry.returnPct >= 0 ? "+" : ""}{(entry.returnPct * 100).toFixed(1)}%
                 </p>
                 <p className="text-muted text-xs">
                   {new Date(entry.simulatedAt).toLocaleDateString("en-US", {
