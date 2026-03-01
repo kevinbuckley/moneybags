@@ -52,7 +52,7 @@ export function ShareCard({
         <div className="flex items-start justify-between">
           <div>
             <p className="text-muted text-xs font-mono uppercase tracking-wider mb-1">
-              Mr. Money Bags
+              Mr. Moneybags
 </p>
             <p className="text-primary font-semibold text-sm">{scenarioName}</p>
           </div>

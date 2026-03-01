@@ -5,11 +5,11 @@ import { StreakBadge } from "@/components/landing/StreakBadge";
 import { PersonalBestBadge } from "@/components/landing/PersonalBestBadge";
 
 export const metadata: Metadata = {
-  title: "Mr. Money Bags — Invest Fake Money",
+  title: "Mr. Moneybags — Invest Fake Money",
   description:
     "Simulate the 2008 crisis, dot-com bubble, Black Monday, and more with real historical data. Rules, auto-trading, and zero real money on the line.",
   openGraph: {
-    title: "Mr. Money Bags — Invest Fake Money",
+    title: "Mr. Moneybags — Invest Fake Money",
     description:
       "Simulate famous market crashes and bull runs with real data. Pick a scenario, build a portfolio, set trading rules, and see what happens.",
   },
@@ -52,10 +52,10 @@ export default function LandingPage() {
       {/* Hero */}
       <div className="flex flex-col items-center justify-center px-4 pt-20 pb-10 text-center">
         <h1 className="text-5xl md:text-7xl font-bold text-primary mb-6 tracking-tight">
-          Mr. Money<span className="text-accent"> Bags</span>
+          Mr. Money<span className="text-accent">bags</span>
         </h1>
         <p className="text-xl md:text-2xl font-bold text-primary mb-4 max-w-lg">
-          Hey Mr. Money Bags, I heard you have some money to invest and think you can beat the market.
+          Hey Mr. Moneybags, I heard you have some money to invest and think you can beat the market.
         </p>
         <p className="text-secondary text-base max-w-md mb-2">
           Simulate famous market crashes and bull runs with real historical data.
@@ -117,7 +117,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="mt-auto px-4 py-6 text-center text-xs text-muted border-t border-border">
-        <p>Mr. Money Bags is for entertainment and educational purposes only. Not financial advice. Not even close.</p>
+        <p>Mr. Moneybags is for entertainment and educational purposes only. Not financial advice. Not even close.</p>
         <div className="flex gap-4 justify-center mt-2">
           <Link href="/how-to-play" className="text-secondary hover:text-primary transition-colors">How to Play</Link>
           <Link href="/leaderboard" className="text-secondary hover:text-primary transition-colors">Leaderboard</Link>
