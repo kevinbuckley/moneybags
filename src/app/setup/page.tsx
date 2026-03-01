@@ -16,6 +16,8 @@ import { Input } from "@/components/ui/Input";
 import { Sheet } from "@/components/ui/Sheet";
 import { Spinner } from "@/components/ui/Spinner";
 import { formatCurrency } from "@/lib/format";
+import { getTodayString } from "@/lib/dailyChallenge";
+import { useDailyChallengeStore } from "@/store/dailyChallengeStore";
 import type { Scenario } from "@/types/scenario";
 import type { Rule, RuleSubject, RuleOperator, RuleActionType } from "@/types/rules";
 
@@ -395,11 +397,42 @@ function StepCapital() {
   );
 }
 
-function StepScenario() {
+function StepScenario({ isDaily }: { isDaily: boolean }) {
   const selectedScenario = usePortfolioStore((s) => s.scenario);
   const setScenario = usePortfolioStore((s) => s.setScenario);
-  const dailyIdx = Math.floor(Date.now() / 86400000) % SCENARIOS.length;
-  const dailySlug = SCENARIOS[dailyIdx].slug;
+
+  // Daily challenge: show locked scenario, no picker
+  if (isDaily && selectedScenario) {
+    return (
+      <div className="flex flex-col gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-primary mb-1">Today&apos;s Challenge 🎯</h2>
+          <p className="text-secondary text-sm">Your scenario is locked for today. Play as many times as you like!</p>
+        </div>
+        <div className="rounded-xl border border-accent/50 bg-accent/5 p-5">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <Badge variant={SCENARIO_BADGE_VARIANT[selectedScenario.color]}>
+              {selectedScenario.startDate.slice(0, 4)}–{selectedScenario.endDate.slice(0, 4)}
+            </Badge>
+            <span className={`text-xs font-mono font-semibold px-2 py-0.5 rounded-full ${DIFFICULTY_BADGE[selectedScenario.difficulty]}`}>
+              {selectedScenario.difficulty}
+            </span>
+            <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-full text-accent bg-accent/10">
+              🔒 Locked
+            </span>
+          </div>
+          <p className="text-primary font-bold text-lg">{selectedScenario.name}</p>
+          <p className="text-secondary text-sm italic mt-1">{selectedScenario.snarkDescription}</p>
+          <p className="text-muted text-xs mt-3">
+            {selectedScenario.startDate} → {selectedScenario.endDate} · {selectedScenario.events.length} events
+          </p>
+        </div>
+        <p className="text-muted text-xs text-center font-mono">
+          🔒 A new challenge unlocks tomorrow
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -410,7 +443,6 @@ function StepScenario() {
       <div className="flex flex-col gap-2">
         {SCENARIOS.map((scenario) => {
           const selected = selectedScenario?.slug === scenario.slug;
-          const isDaily = scenario.slug === dailySlug;
           return (
             <button
               key={scenario.slug}
@@ -418,8 +450,6 @@ function StepScenario() {
               className={`rounded-xl border p-4 text-left transition-all ${
                 selected
                   ? `${SCENARIO_RING[scenario.color]} bg-elevated ring-1 ring-accent/30`
-                  : isDaily
-                  ? "border-accent/40 hover:border-accent/60"
                   : "border-border hover:border-secondary"
               }`}
             >
@@ -430,11 +460,6 @@ function StepScenario() {
                 <span className={`text-xs font-mono font-semibold px-2 py-0.5 rounded-full ${DIFFICULTY_BADGE[scenario.difficulty]}`}>
                   {scenario.difficulty}
                 </span>
-                {isDaily && (
-                  <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-full text-accent bg-accent/10">
-                    🎯 Daily
-                  </span>
-                )}
                 {selected && <Badge variant="accent">Selected</Badge>}
               </div>
               <p className="text-primary font-semibold text-sm mt-1">{scenario.name}</p>
@@ -1330,6 +1355,7 @@ function StepReview({
 interface ChallengeData {
   scenarioSlug: string;
   allocations: Array<{ ticker: string; pct: number }>;
+  isDaily: boolean;
 }
 
 // Isolated so that useSearchParams() is inside a Suspense boundary (Next.js requirement)
@@ -1338,6 +1364,7 @@ function ChallengeDetector({ onChallenge }: { onChallenge: (data: ChallengeData)
   useEffect(() => {
     const s = searchParams.get("s");
     const a = searchParams.get("a");
+    const daily = searchParams.get("daily") === "1";
     if (!s) return;
     const allocations: Array<{ ticker: string; pct: number }> = [];
     if (a) {
@@ -1346,7 +1373,7 @@ function ChallengeDetector({ onChallenge }: { onChallenge: (data: ChallengeData)
         if (ticker && pct) allocations.push({ ticker, pct: Number(pct) });
       }
     }
-    onChallenge({ scenarioSlug: s, allocations });
+    onChallenge({ scenarioSlug: s, allocations, isDaily: daily });
   }, []);
   return null;
 }
@@ -1358,6 +1385,9 @@ export default function SetupPage() {
   const [loadingMsg, setLoadingMsg] = useState(LOADING_MESSAGES[0]);
   const [preSimPuts, setPreSimPuts] = useState<PreSimPut[]>([]);
   const [drip, setDrip] = useState(false);
+  const [isDaily, setIsDaily] = useState(false);
+
+  const { lockedDate, lockedSlug, recordPlay } = useDailyChallengeStore();
 
   const addPreSimPut = (p: Omit<PreSimPut, "id">) =>
     setPreSimPuts((prev) => [...prev, { ...p, id: `pp-${Date.now()}` }]);
@@ -1408,6 +1438,10 @@ export default function SetupPage() {
         granularity: "daily" as const,
         drip,
       };
+      // Record this as today's daily challenge play (locks the scenario for the day)
+      if (isDaily) {
+        recordPlay(getTodayString(), scenario.slug);
+      }
       initSimulation(config, priceData);
       allocations.forEach((alloc) => {
         submitTrade({
@@ -1475,11 +1509,18 @@ export default function SetupPage() {
       {/* useSearchParams must live inside Suspense per Next.js App Router rules */}
       <Suspense>
         <ChallengeDetector
-          onChallenge={({ scenarioSlug, allocations: challengeAllocs }) => {
+          onChallenge={({ scenarioSlug, allocations: challengeAllocs, isDaily: daily }) => {
             const found = SCENARIOS.find((sc) => sc.slug === scenarioSlug);
             if (found) {
+              // Guard: if locked to a different scenario today, redirect home
+              const today = getTodayString();
+              if (lockedDate === today && lockedSlug !== null && lockedSlug !== scenarioSlug) {
+                router.push("/");
+                return;
+              }
               setScenario(found);
               if (challengeAllocs.length > 0) setAllocations(challengeAllocs);
+              if (daily) setIsDaily(true);
               setStep(2);
             }
           }}
@@ -1502,7 +1543,7 @@ export default function SetupPage() {
       <p className="text-xs text-muted font-mono mb-4 uppercase tracking-widest">{STEPS[step]}</p>
       <div className="flex-1">
         {step === 0 && <StepCapital />}
-        {step === 1 && <StepScenario />}
+        {step === 1 && <StepScenario isDaily={isDaily} />}
         {step === 2 && <StepPortfolio />}
         {step === 3 && <StepRules scenario={scenario} />}
         {step === 4 && (
