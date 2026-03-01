@@ -1014,11 +1014,15 @@ function StepReview({
   preSimPuts,
   onAddPut,
   onRemovePut,
+  drip,
+  onDripChange,
 }: {
   launching: boolean;
   preSimPuts: PreSimPut[];
   onAddPut: (p: Omit<PreSimPut, "id">) => void;
   onRemovePut: (id: string) => void;
+  drip: boolean;
+  onDripChange: (v: boolean) => void;
 }) {
   const startingCapital = usePortfolioStore((s) => s.startingCapital);
   const scenario = usePortfolioStore((s) => s.scenario);
@@ -1118,6 +1122,28 @@ function StepReview({
           </div>
         )}
       </div>
+      {/* ── DRIP toggle ─────────────────────────────────────────────────── */}
+      <button
+        onClick={() => onDripChange(!drip)}
+        className={`w-full rounded-xl p-4 border text-left transition-colors ${
+          drip
+            ? "bg-accent/10 border-accent/40"
+            : "bg-elevated border-border hover:border-secondary"
+        }`}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-semibold text-primary">💰 Dividend Reinvestment (DRIP)</p>
+            <p className="text-xs text-secondary mt-0.5">
+              Reinvest dividends as fractional shares daily. ETFs &amp; dividend stocks compound faster.
+            </p>
+          </div>
+          <div className={`w-10 h-5 rounded-full transition-colors shrink-0 ml-3 flex items-center px-0.5 ${drip ? "bg-accent" : "bg-border"}`}>
+            <div className={`w-4 h-4 rounded-full bg-white transition-transform ${drip ? "translate-x-5" : "translate-x-0"}`} />
+          </div>
+        </div>
+      </button>
+
       {/* ── Warnings ─────────────────────────────────────────────────────── */}
 
       {/* 1. Buy rules with no cash reserve */}
@@ -1331,6 +1357,7 @@ export default function SetupPage() {
   const [launching, setLaunching] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState(LOADING_MESSAGES[0]);
   const [preSimPuts, setPreSimPuts] = useState<PreSimPut[]>([]);
+  const [drip, setDrip] = useState(false);
 
   const addPreSimPut = (p: Omit<PreSimPut, "id">) =>
     setPreSimPuts((prev) => [...prev, { ...p, id: `pp-${Date.now()}` }]);
@@ -1379,6 +1406,7 @@ export default function SetupPage() {
         rules,
         mode: "movie" as const,
         granularity: "daily" as const,
+        drip,
       };
       initSimulation(config, priceData);
       allocations.forEach((alloc) => {
@@ -1483,6 +1511,8 @@ export default function SetupPage() {
             preSimPuts={preSimPuts}
             onAddPut={addPreSimPut}
             onRemovePut={removePreSimPut}
+            drip={drip}
+            onDripChange={setDrip}
           />
         )}
       </div>

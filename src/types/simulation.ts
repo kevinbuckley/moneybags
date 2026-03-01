@@ -16,6 +16,8 @@ export interface SimulationConfig {
   rules: Rule[];
   mode: PlaybackMode;
   granularity: TimeGranularity;
+  /** Reinvest dividends as fractional shares each trading day */
+  drip?: boolean;
 }
 
 export interface SimulationState {

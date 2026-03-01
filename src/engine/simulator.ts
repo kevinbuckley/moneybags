@@ -10,6 +10,7 @@ import type { NarratorEvent } from "@/types/narrator";
 import { applyTrade, recomputeValues } from "./portfolio";
 import { evaluateRules } from "./rules";
 import { recomputeOptionValue, isExpiring, expiryIntrinsicValue, processShortPutExpiry, processShortCallExpiry } from "./options";
+import { applyDripDividends } from "./dividends";
 import { generateNarratorEvent } from "@/lib/narrator";
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
@@ -232,6 +233,11 @@ export function advanceTick(
 
   // 5. Recompute equity/etf/crypto at close
   portfolio = recomputeValues(portfolio, priceData, state.currentDateIndex);
+
+  // 5b. Dividend reinvestment (DRIP) — fractional shares added daily when enabled
+  if (state.config.drip) {
+    portfolio = applyDripDividends(portfolio, priceData, state.currentDateIndex);
+  }
 
   // 6. Build snapshot
   const prevSnapshot = state.history[state.history.length - 1] ?? null;
