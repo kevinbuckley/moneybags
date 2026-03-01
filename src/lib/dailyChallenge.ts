@@ -57,6 +57,33 @@ export function getUpcomingChallenges(
   return result;
 }
 
+/**
+ * Returns `true` when the user's existing daily lock should block them from
+ * starting a *different* scenario today.
+ *
+ * Returns `false` (i.e. allow play) when any of these hold:
+ *  - They haven't played today (`lockedDate !== today`)
+ *  - They have no lock (`lockedSlug` is null)
+ *  - The locked slug no longer exists in the current scenarios — the scenario
+ *    was removed from the app after the user played it, so the lock is stale
+ *    and we should not punish them
+ *  - They are replaying the exact same scenario they already locked to
+ */
+export function isDailyLockConflict(
+  lockedDate: string | null,
+  lockedSlug: string | null,
+  today: string,
+  targetSlug: string,
+  scenarios: Scenario[]
+): boolean {
+  if (lockedDate !== today) return false;
+  if (!lockedSlug) return false;
+  // Stale lock: the scenario that was played no longer exists in the current
+  // scenario list (e.g. it was removed between the user's session and now).
+  if (!scenarios.some((s) => s.slug === lockedSlug)) return false;
+  return lockedSlug !== targetSlug;
+}
+
 /** Add one calendar day to a "YYYY-MM-DD" string */
 export function addDays(dateStr: string, n: number): string {
   const d = new Date(dateStr + "T00:00:00Z");

@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/Input";
 import { Sheet } from "@/components/ui/Sheet";
 import { Spinner } from "@/components/ui/Spinner";
 import { formatCurrency } from "@/lib/format";
-import { getTodayString } from "@/lib/dailyChallenge";
+import { getTodayString, isDailyLockConflict } from "@/lib/dailyChallenge";
 import { useDailyChallengeStore } from "@/store/dailyChallengeStore";
 import type { Scenario } from "@/types/scenario";
 import type { Rule, RuleSubject, RuleOperator, RuleActionType } from "@/types/rules";
@@ -1527,9 +1527,12 @@ export default function SetupPage() {
           onChallenge={({ scenarioSlug, allocations: challengeAllocs, isDaily: daily }) => {
             const found = SCENARIOS.find((sc) => sc.slug === scenarioSlug);
             if (found) {
-              // Guard: if locked to a different scenario today, redirect home
+              // Guard: if the user already locked to a *different* valid scenario
+              // today, send them home. Stale locks (slug no longer in SCENARIOS,
+              // e.g. "tutorial" after it was removed) are ignored so the user
+              // isn't silently blocked by outdated localStorage state.
               const today = getTodayString();
-              if (lockedDate === today && lockedSlug !== null && lockedSlug !== scenarioSlug) {
+              if (isDailyLockConflict(lockedDate, lockedSlug, today, scenarioSlug, SCENARIOS)) {
                 router.push("/");
                 return;
               }

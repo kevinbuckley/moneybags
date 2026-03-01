@@ -6,8 +6,10 @@ import {
   getUpcomingChallenges,
   addDays,
   getTodayString,
+  isDailyLockConflict,
 } from "../dailyChallenge";
 import type { Scenario } from "@/types/scenario";
+import { SCENARIOS as REAL_SCENARIOS } from "@/data/scenarios";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -201,6 +203,68 @@ describe("addDays", () => {
   it("returns a YYYY-MM-DD formatted string", () => {
     const result = addDays("2026-06-15", 5);
     expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});
+
+// ── isDailyLockConflict ────────────────────────────────────────────────────────
+//
+// Regression suite for the "clicking today's challenge does nothing" bug.
+//
+// Root cause (2026-03-01): the "tutorial" scenario was today's daily challenge
+// in the old SCENARIOS array. After tutorial was removed and replaced with
+// "2025-tariff-shock", any user whose localStorage still had lockedSlug =
+// "tutorial" would be immediately redirected home by the guard in setup/page.tsx
+// (lockedSlug !== targetSlug). isDailyLockConflict fixes this by treating
+// stale slugs (no longer in SCENARIOS) as non-blocking.
+
+describe("isDailyLockConflict", () => {
+  const TODAY = "2026-03-01";
+  const YESTERDAY = "2026-02-28";
+
+  // 11 "current" scenarios — none called "tutorial"
+  const CURRENT = SCENARIOS_11; // a, b, c, … k
+
+  it("returns false when lockedDate is null (user has never played)", () => {
+    expect(isDailyLockConflict(null, null, TODAY, "a", CURRENT)).toBe(false);
+  });
+
+  it("returns false when lockedDate is a previous day", () => {
+    expect(isDailyLockConflict(YESTERDAY, "a", TODAY, "b", CURRENT)).toBe(false);
+  });
+
+  it("returns false when lockedSlug is null", () => {
+    expect(isDailyLockConflict(TODAY, null, TODAY, "a", CURRENT)).toBe(false);
+  });
+
+  it("returns false when the user is replaying the same scenario they locked to", () => {
+    expect(isDailyLockConflict(TODAY, "a", TODAY, "a", CURRENT)).toBe(false);
+  });
+
+  it("returns true when locked to a different *valid* scenario today", () => {
+    expect(isDailyLockConflict(TODAY, "a", TODAY, "b", CURRENT)).toBe(true);
+  });
+
+  // ── Regression: stale lock from a removed scenario ─────────────────────────
+
+  it("REGRESSION: returns false when lockedSlug is a scenario that no longer exists", () => {
+    // Simulates: user played "tutorial" as today's daily challenge, then
+    // "tutorial" was removed from SCENARIOS and replaced with another slug.
+    // Without the stale-lock fix the guard fired: "tutorial" !== "a" → redirect → "does nothing".
+    const withoutK = CURRENT.filter((s) => s.slug !== "k"); // "k" plays the role of "tutorial"
+    expect(isDailyLockConflict(TODAY, "k", TODAY, "a", withoutK)).toBe(false);
+  });
+
+  it("does NOT treat a still-valid slug as stale", () => {
+    // "k" still exists in CURRENT — locking to "k" and targeting "a" is a real conflict
+    expect(isDailyLockConflict(TODAY, "k", TODAY, "a", CURRENT)).toBe(true);
+  });
+
+  it("returns false for the literal 'tutorial' slug against the real SCENARIOS (belt-and-suspenders)", () => {
+    // The tutorial scenario was removed from SCENARIOS on 2026-03-01.
+    // Any persisted lockedSlug of "tutorial" must never block the user from
+    // playing today's actual daily challenge.
+    expect(REAL_SCENARIOS.some((s) => s.slug === "tutorial")).toBe(false); // sanity: tutorial is gone
+    expect(isDailyLockConflict(TODAY, "tutorial", TODAY, "2025-tariff-shock", REAL_SCENARIOS)).toBe(false);
   });
 });
 
