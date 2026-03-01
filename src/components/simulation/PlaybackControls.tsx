@@ -62,7 +62,7 @@ export function PlaybackControls() {
           {SPEEDS.map((s) => (
             <button
               key={s}
-              onClick={() => setSpeed(s)}
+              onClick={() => { setSpeed(s); if (!isPlaying && !isComplete && state) play(); }}
               className={`px-3 py-1.5 text-xs font-mono rounded-lg border transition-colors min-h-[32px] ${
                 speed === s
                   ? "border-accent text-accent bg-accent/10"
