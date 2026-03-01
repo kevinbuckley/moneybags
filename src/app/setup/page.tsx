@@ -259,6 +259,30 @@ function actionSummary(form: RuleForm): string {
   return `${label}${ticker}${amount}${pct}`;
 }
 
+// ─── Reusable controlled-number input ─────────────────────────────────────────
+// Uses local state so iOS doesn't jump the caret on every keystroke.
+function AllocPctInput({ pct, ticker, update }: { pct: number; ticker: string; update: (t: string, v: number) => void }) {
+  const [raw, setRaw] = useState(pct.toFixed(1));
+  // Sync when the value changes externally (e.g. preset button applied)
+  useEffect(() => { setRaw(pct.toFixed(1)); }, [pct]);
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      value={raw}
+      onChange={(e) => setRaw(e.target.value)}
+      onFocus={(e) => e.target.select()}
+      onBlur={() => {
+        const n = parseFloat(raw);
+        const clamped = isNaN(n) ? pct : Math.min(100, Math.max(0, n));
+        update(ticker, clamped);
+        setRaw(clamped.toFixed(1));
+      }}
+      className="w-20 bg-surface border border-border rounded-lg px-2 py-1.5 text-primary text-sm font-mono text-right focus:outline-none focus:border-accent"
+    />
+  );
+}
+
 // ─── Step components ───────────────────────────────────────────────────────────
 
 function StepCapital() {
@@ -278,13 +302,12 @@ function StepCapital() {
         <p className="text-secondary text-sm">How much fake money are you willing to lose?</p>
       </div>
       <Input
-        type="number"
+        type="text"
+        inputMode="decimal"
         prefix="$"
         value={raw}
         onChange={(e) => setRaw(e.target.value)}
         onBlur={() => commit(raw)}
-        min={1000}
-        max={1_000_000_000}
         placeholder="10000"
       />
       <div className="flex gap-2">
@@ -488,16 +511,7 @@ function StepPortfolio() {
                   <p className="text-muted text-xs truncate">{inst?.name}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <input
-                    type="number"
-                    value={alloc.pct.toFixed(1)}
-                    onChange={(e) =>
-                      updateAllocationPct(alloc.ticker, parseFloat(e.target.value) || 0)
-                    }
-                    className="w-20 bg-surface border border-border rounded-lg px-2 py-1.5 text-primary text-sm font-mono text-right focus:outline-none focus:border-accent"
-                    min={0}
-                    max={100}
-                  />
+                  <AllocPctInput pct={alloc.pct} ticker={alloc.ticker} update={updateAllocationPct} />
                   <span className="text-secondary text-sm">%</span>
                   <button
                     onClick={() => removeAllocation(alloc.ticker)}
@@ -539,6 +553,7 @@ function StepRules({ scenario }: { scenario: Scenario | null }) {
   const [selectedTemplate, setSelectedTemplate] = useState<RuleTemplate | null>(null);
   const [templateValues, setTemplateValues] = useState<Record<string, string>>({});
   const [form, setForm] = useState<RuleForm>({ ...BLANK_RULE_FORM, conditions: [{ ...BLANK_CONDITION }] });
+  const [cooldownRaw, setCooldownRaw] = useState(String(BLANK_RULE_FORM.cooldownTicks));
 
   const scenarioTickers = INSTRUMENTS
     .filter((i) => scenario ? i.availableScenarios.includes(scenario.dataSlug ?? scenario.slug) : false)
@@ -549,6 +564,7 @@ function StepRules({ scenario }: { scenario: Scenario | null }) {
     setSelectedTemplate(null);
     setTemplateValues({});
     setForm({ ...BLANK_RULE_FORM, conditions: [{ ...BLANK_CONDITION }] });
+    setCooldownRaw(String(BLANK_RULE_FORM.cooldownTicks));
     setSheetOpen(true);
   };
 
@@ -738,24 +754,23 @@ function StepRules({ scenario }: { scenario: Scenario | null }) {
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary text-sm pointer-events-none">$</span>
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="decimal"
                       placeholder={field.placeholder}
                       value={templateValues[field.id] ?? ""}
                       onChange={(e) => setTemplateValues((v) => ({ ...v, [field.id]: e.target.value }))}
                       className="w-full bg-elevated border border-border rounded-xl pl-8 pr-4 py-3 text-primary text-sm font-mono focus:outline-none focus:border-accent min-h-[52px]"
-                      min={field.min}
                     />
                   </div>
                 ) : (
                   <div className="relative">
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="decimal"
                       placeholder={field.placeholder}
                       value={templateValues[field.id] ?? ""}
                       onChange={(e) => setTemplateValues((v) => ({ ...v, [field.id]: e.target.value }))}
                       className="w-full bg-elevated border border-border rounded-xl px-4 pr-10 py-3 text-primary text-sm font-mono focus:outline-none focus:border-accent min-h-[52px]"
-                      min={field.min}
-                      max={field.max}
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-secondary text-sm pointer-events-none">%</span>
                   </div>
@@ -825,7 +840,8 @@ function StepRules({ scenario }: { scenario: Scenario | null }) {
                         <option value="lte">&lt;=</option>
                       </select>
                       <input
-                        type="number"
+                        type="text"
+                        inputMode="decimal"
                         placeholder="Value"
                         value={cond.value}
                         onChange={(e) => updateCondition(idx, { value: e.target.value })}
@@ -876,7 +892,8 @@ function StepRules({ scenario }: { scenario: Scenario | null }) {
                 )}
                 {ACTION_NEEDS_AMOUNT.has(form.actionType) && (
                   <Input
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     prefix="$"
                     placeholder="Dollar amount"
                     value={form.actionAmount}
@@ -885,12 +902,11 @@ function StepRules({ scenario }: { scenario: Scenario | null }) {
                 )}
                 {ACTION_NEEDS_PCT.has(form.actionType) && (
                   <Input
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     placeholder="Percentage (0-100)"
                     value={form.actionPct}
                     onChange={(e) => setForm((f) => ({ ...f, actionPct: e.target.value }))}
-                    min={0}
-                    max={100}
                   />
                 )}
               </div>
@@ -901,11 +917,16 @@ function StepRules({ scenario }: { scenario: Scenario | null }) {
                 <p className="text-muted text-xs">Min days before rule fires again</p>
               </div>
               <input
-                type="number"
-                value={form.cooldownTicks}
-                onChange={(e) => setForm((f) => ({ ...f, cooldownTicks: Math.max(0, parseInt(e.target.value) || 0) }))}
+                type="text"
+                inputMode="numeric"
+                value={cooldownRaw}
+                onChange={(e) => setCooldownRaw(e.target.value.replace(/[^0-9]/g, ""))}
+                onBlur={() => {
+                  const n = Math.max(0, parseInt(cooldownRaw) || 0);
+                  setForm((f) => ({ ...f, cooldownTicks: n }));
+                  setCooldownRaw(String(n));
+                }}
                 className="w-16 bg-elevated border border-border rounded-lg px-2 py-2.5 text-primary text-xs font-mono text-center focus:outline-none focus:border-accent min-h-[44px]"
-                min={0}
               />
             </div>
             {form.conditions.some((c) => c.value !== "") && (

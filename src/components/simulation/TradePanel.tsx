@@ -135,12 +135,12 @@ export function TradePanel({ open, onClose, defaultTicker }: TradePanelProps) {
               </span>
             </p>
             <Input
-              type="number"
+              type="text"
+              inputMode="decimal"
               prefix="$"
               placeholder="Amount to invest"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              min={1}
             />
             <div className="flex gap-2 mt-2">
               {[25, 50, 100].map((pct) => (
@@ -161,12 +161,11 @@ export function TradePanel({ open, onClose, defaultTicker }: TradePanelProps) {
           <div>
             <p className="text-xs text-secondary font-medium mb-2">Percentage to sell</p>
             <Input
-              type="number"
+              type="text"
+              inputMode="decimal"
               placeholder="Percentage (0-100)"
               value={sellPct}
               onChange={(e) => setSellPct(e.target.value)}
-              min={1}
-              max={100}
             />
             <div className="flex gap-2 mt-2">
               {[25, 50, 100].map((p) => (

@@ -55,3 +55,13 @@ body {
 * {
   -webkit-tap-highlight-color: transparent;
 }
+
+/* Hide number input spinners — use inputMode="decimal" for numeric keyboards instead */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
