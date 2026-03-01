@@ -10,11 +10,14 @@ function dateSeed(dateStr: string): number {
   return parseInt(dateStr.replace(/-/g, ""), 10);
 }
 
-/** LCG-based seeded random → value in [0, 1) */
+/** Seeded hash → value in [0, 1) with good avalanche for sequential inputs */
 function seededRandom(seed: number): number {
-  // Same LCG parameters used in generate-future.mjs for consistency
+  // SplitMix32 finalizer — thoroughly mixes bits so consecutive date seeds
+  // (which differ by only 1) produce well-distributed, uncorrelated outputs.
   let s = seed | 0;
-  s = Math.imul(s, 1664525) + 1013904223;
+  s = Math.imul(s ^ (s >>> 16), 0x45d9f3b) | 0;
+  s = Math.imul(s ^ (s >>> 16), 0x45d9f3b) | 0;
+  s = s ^ (s >>> 16);
   return (s >>> 0) / 0x100000000;
 }
 
