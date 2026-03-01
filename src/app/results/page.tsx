@@ -204,10 +204,12 @@ export default function ResultsPage() {
     setReplaying(true);
     addedRef.current = false; // allow re-recording result
     try {
-      const { scenario, startingCapital, allocations, rules: rulesCfg, mode, granularity } = state.config;
+      const { scenario, startingCapital, allocations, rules: rulesCfg, mode, granularity, drip } = state.config;
       const tickers = allocations.map((a) => a.ticker);
-      const priceData = await loadPriceDataMap(tickers, scenario.slug);
-      initSimulation({ startingCapital, scenario, allocations, rules: rulesCfg, mode, granularity }, priceData);
+      // Always include SPY for benchmark overlay; use dataSlug if set (same as setup/page.tsx)
+      const tickersWithSpy = tickers.includes("SPY") ? tickers : [...tickers, "SPY"];
+      const newPriceData = await loadPriceDataMap(tickersWithSpy, scenario.dataSlug ?? scenario.slug);
+      initSimulation({ startingCapital, scenario, allocations, rules: rulesCfg, mode, granularity, drip }, newPriceData);
       allocations.forEach((alloc) => {
         submitTrade({ ticker: alloc.ticker, action: "buy", amount: (alloc.pct / 100) * startingCapital, source: "manual" });
       });
