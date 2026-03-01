@@ -28,6 +28,7 @@ function makeEmptyPortfolio(cash = 50000): Portfolio {
   return {
     positions: [],
     cashBalance: cash,
+    reservedCash: 0,
     totalValue: cash,
     startingValue: cash,
   };

@@ -20,9 +20,10 @@ export interface Position {
 
 export interface Portfolio {
   positions: Position[];
-  cashBalance: number; // in dollars
-  totalValue: number; // cash + all position values
-  startingValue: number; // value at simulation start
+  cashBalance: number;    // in dollars (total cash, including reserved)
+  reservedCash: number;   // portion of cashBalance locked as put collateral (strike×100×contracts)
+  totalValue: number;     // cash + all position values
+  startingValue: number;  // value at simulation start
 }
 
 export interface PositionSnapshot {

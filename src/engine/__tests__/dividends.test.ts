@@ -28,7 +28,7 @@ function makePos(
 
 function makePortfolio(cash: number, positions: Position[] = []): Portfolio {
   const posTotal = positions.reduce((s, p) => s + p.currentValue, 0);
-  return { positions, cashBalance: cash, totalValue: cash + posTotal, startingValue: cash + posTotal };
+  return { positions, cashBalance: cash, reservedCash: 0, totalValue: cash + posTotal, startingValue: cash + posTotal };
 }
 
 function oneDay(ticker: string, close: number): PriceDataMap {

@@ -342,6 +342,7 @@ describe("advanceTick — DRIP flag", () => {
         currentValue: 10_000,
       }],
       cashBalance: 0,
+      reservedCash: 0,
       totalValue: 10_000,
       startingValue: 10_000,
     };
@@ -366,6 +367,7 @@ describe("advanceTick — DRIP flag", () => {
         currentPrice: 100, currentValue: 10_000,
       }],
       cashBalance: 500,
+      reservedCash: 0,
       totalValue: 10_500,
       startingValue: 10_500,
     };
@@ -385,6 +387,7 @@ describe("advanceTick — DRIP flag", () => {
         currentPrice: 50_000, currentValue: 50_000,
       }],
       cashBalance: 0,
+      reservedCash: 0,
       totalValue: 50_000,
       startingValue: 50_000,
     };

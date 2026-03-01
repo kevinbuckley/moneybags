@@ -47,7 +47,9 @@ function applyBuy(
   date: string
 ): Portfolio {
   if (price <= 0) return portfolio;
-  const dollarAmount = Math.min(order.amount ?? 0, portfolio.cashBalance);
+  // Can only spend free cash (total cash minus collateral reserved for short puts)
+  const availableCash = Math.max(0, portfolio.cashBalance - portfolio.reservedCash);
+  const dollarAmount = Math.min(order.amount ?? 0, availableCash);
   if (dollarAmount <= 0) return portfolio;
 
   const quantity = dollarAmount / price;
@@ -204,10 +206,12 @@ function applyShortPut(
     },
   };
 
+  const collateral = strike * 100 * numContracts;
   const newCash = portfolio.cashBalance + premium;
+  const newReservedCash = portfolio.reservedCash + collateral;
   const positions = [...portfolio.positions, newPos];
   const totalPositionValue = positions.reduce((s, p) => s + p.currentValue, 0);
-  return { ...portfolio, positions, cashBalance: newCash, totalValue: newCash + totalPositionValue };
+  return { ...portfolio, positions, cashBalance: newCash, reservedCash: newReservedCash, totalValue: newCash + totalPositionValue };
 }
 
 /**
@@ -248,10 +252,12 @@ function applyShortCall(
     },
   };
 
+  const callCollateral = strike * 100 * numContracts;
   const newCash = portfolio.cashBalance + premium;
+  const newReservedCash = portfolio.reservedCash + callCollateral;
   const positions = [...portfolio.positions, newPos];
   const totalPositionValue = positions.reduce((s, p) => s + p.currentValue, 0);
-  return { ...portfolio, positions, cashBalance: newCash, totalValue: newCash + totalPositionValue };
+  return { ...portfolio, positions, cashBalance: newCash, reservedCash: newReservedCash, totalValue: newCash + totalPositionValue };
 }
 
 /**
@@ -271,7 +277,12 @@ function applyCloseOption(portfolio: Portfolio, order: TradeOrder): Portfolio {
   const newCash = portfolio.cashBalance - costToClose;
   const positions = portfolio.positions.filter((p) => p.id !== pos.id);
   const totalPositionValue = positions.reduce((s, p) => s + p.currentValue, 0);
-  return { ...portfolio, positions, cashBalance: newCash, totalValue: newCash + totalPositionValue };
+  // Release the collateral that was reserved when the option was written
+  const collateral = pos.optionConfig
+    ? pos.optionConfig.strike * 100 * pos.optionConfig.numContracts
+    : 0;
+  const newReservedCash = Math.max(0, portfolio.reservedCash - collateral);
+  return { ...portfolio, positions, cashBalance: newCash, reservedCash: newReservedCash, totalValue: newCash + totalPositionValue };
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -328,6 +339,7 @@ export function createPortfolio(startingCapital: number): Portfolio {
   return {
     positions: [],
     cashBalance: startingCapital,
+    reservedCash: 0,
     totalValue: startingCapital,
     startingValue: startingCapital,
   };

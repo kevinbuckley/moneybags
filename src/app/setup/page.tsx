@@ -1443,16 +1443,13 @@ export default function SetupPage() {
         recordPlay(getTodayString(), scenario.slug);
       }
       initSimulation(config, priceData);
-      allocations.forEach((alloc) => {
-        submitTrade({
-          ticker: alloc.ticker,
-          action: "buy",
-          amount: (alloc.pct / 100) * startingCapital,
-          source: "manual",
-        });
-      });
 
-      // Submit pre-configured puts using Day 1 prices
+      // ── 1. Compute & submit pre-sim puts first ────────────────────────────
+      // Puts execute before stock buys so collateral is reserved before stock
+      // purchases are sized. Premium credits cash; collateral reduces the free
+      // cash available for equities.
+      let totalCollateral = 0;
+      let totalPremium = 0;
       for (const pp of preSimPuts) {
         const series = priceData.get(pp.ticker);
         if (!series || series.length === 0) continue;
@@ -1479,16 +1476,34 @@ export default function SetupPage() {
           sigma,
           type: "put",
         });
+        const premium = bs.price * 100 * pp.numContracts;
+        const collateral = strike * 100 * pp.numContracts;
+        totalCollateral += collateral;
+        totalPremium += premium;
         submitTrade({
           ticker: pp.ticker,
           action: "sell_put",
           strike,
           expiryDate,
           numContracts: pp.numContracts,
-          premium: bs.price * 100 * pp.numContracts,
+          premium,
           source: "manual",
         });
       }
+
+      // ── 2. Submit stock buys sized from free cash ─────────────────────────
+      // freeCash = starting capital − collateral reserved + premium collected.
+      // The allocation percentages apply against this free-cash budget so the
+      // total stock spend can never encroach on reserved collateral.
+      const freeCash = Math.max(0, startingCapital - totalCollateral + totalPremium);
+      allocations.forEach((alloc) => {
+        submitTrade({
+          ticker: alloc.ticker,
+          action: "buy",
+          amount: (alloc.pct / 100) * freeCash,
+          source: "manual",
+        });
+      });
 
       router.push("/simulate");
     } catch {

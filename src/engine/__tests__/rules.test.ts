@@ -29,6 +29,7 @@ function makePortfolio(cash: number, positions: Position[] = []): Portfolio {
   return {
     positions,
     cashBalance: cash,
+    reservedCash: 0,
     totalValue: cash + posTotal,
     startingValue: cash + posTotal,
   };

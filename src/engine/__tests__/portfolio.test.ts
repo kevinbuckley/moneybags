@@ -35,6 +35,7 @@ function makePortfolio(
   return {
     positions,
     cashBalance: cash,
+    reservedCash: 0,
     totalValue: cash + posTotal,
     startingValue: cash + posTotal,
   };

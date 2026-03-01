@@ -92,6 +92,9 @@ export function processShortPutExpiry(
 
   const positions = portfolio.positions.filter((p) => p.id !== pos.id);
   const isITM = underlyingPrice < config.strike;
+  // Always release the collateral when the short put is removed
+  const collateral = config.strike * 100 * config.numContracts;
+  const newReservedCash = Math.max(0, portfolio.reservedCash - collateral);
 
   if (!isITM) {
     // OTM — expires worthless, position removed, cash stays
@@ -100,6 +103,7 @@ export function processShortPutExpiry(
       portfolio: {
         ...portfolio,
         positions,
+        reservedCash: newReservedCash,
         totalValue: portfolio.cashBalance + totalPositionValue,
       },
       wasAssigned: false,
@@ -116,6 +120,7 @@ export function processShortPutExpiry(
       ...portfolio,
       positions,
       cashBalance: newCash,
+      reservedCash: newReservedCash,
       totalValue: newCash + totalPositionValue,
     },
     wasAssigned: true,
@@ -141,11 +146,14 @@ export function processShortCallExpiry(
 
   const positions = portfolio.positions.filter((p) => p.id !== pos.id);
   const isITM = underlyingPrice > config.strike; // call ITM when stock > strike
+  // Always release collateral when covered call is removed
+  const callCollateral = config.strike * 100 * config.numContracts;
+  const newReservedCash = Math.max(0, portfolio.reservedCash - callCollateral);
 
   if (!isITM) {
     const totalPositionValue = positions.reduce((s, p) => s + p.currentValue, 0);
     return {
-      portfolio: { ...portfolio, positions, totalValue: portfolio.cashBalance + totalPositionValue },
+      portfolio: { ...portfolio, positions, reservedCash: newReservedCash, totalValue: portfolio.cashBalance + totalPositionValue },
       wasAssigned: false,
     };
   }
@@ -160,6 +168,7 @@ export function processShortCallExpiry(
       ...portfolio,
       positions,
       cashBalance: newCash,
+      reservedCash: newReservedCash,
       totalValue: newCash + totalPositionValue,
     },
     wasAssigned: true,
