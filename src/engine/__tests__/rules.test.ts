@@ -93,6 +93,7 @@ function makeState(
     rulesLog: [] as RuleFireEvent[],
     narratorQueue: [],
     pendingTrades: [],
+    totalManualTrades: 0,
     isComplete: false,
   };
 }

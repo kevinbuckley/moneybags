@@ -28,6 +28,7 @@ export interface SimulationState {
   rulesLog: RuleFireEvent[];
   narratorQueue: import("./narrator").NarratorEvent[];
   pendingTrades: TradeOrder[];
+  totalManualTrades: number; // count of source:"manual" trades executed during the simulation
   isComplete: boolean;
 }
 

@@ -1487,7 +1487,7 @@ export default function SetupPage() {
           expiryDate,
           numContracts: pp.numContracts,
           premium,
-          source: "manual",
+          source: "initial",
         });
       }
 
@@ -1501,7 +1501,7 @@ export default function SetupPage() {
           ticker: alloc.ticker,
           action: "buy",
           amount: (alloc.pct / 100) * freeCash,
-          source: "manual",
+          source: "initial",
         });
       });
 

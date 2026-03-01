@@ -211,7 +211,7 @@ export default function ResultsPage() {
       const newPriceData = await loadPriceDataMap(tickersWithSpy, scenario.dataSlug ?? scenario.slug);
       initSimulation({ startingCapital, scenario, allocations, rules: rulesCfg, mode, granularity, drip }, newPriceData);
       allocations.forEach((alloc) => {
-        submitTrade({ ticker: alloc.ticker, action: "buy", amount: (alloc.pct / 100) * startingCapital, source: "manual" });
+        submitTrade({ ticker: alloc.ticker, action: "buy", amount: (alloc.pct / 100) * startingCapital, source: "initial" });
       });
       router.push("/simulate");
     } catch {

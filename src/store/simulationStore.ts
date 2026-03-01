@@ -44,6 +44,7 @@ export const useSimulationStore = create<SimulationStore>((set, get) => ({
       rulesLog: [],
       narratorQueue: [],
       pendingTrades: [],
+      totalManualTrades: 0,
       isComplete: false,
     };
     set({ state, priceData, isPlaying: false });

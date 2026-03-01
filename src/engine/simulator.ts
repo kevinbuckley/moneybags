@@ -156,6 +156,7 @@ export function advanceTick(
   const scenarioName = state.config.scenario.name;
   const riskFreeRate = state.config.scenario.riskFreeRate;
   const allTrades = [...(state.pendingTrades ?? []), ...(pendingTrades ?? [])];
+  const newManualTrades = allTrades.filter((t) => t.source === "manual").length;
 
   // 1. Apply pending trades at open
   let portfolio = state.portfolio;
@@ -273,6 +274,7 @@ export function advanceTick(
     rulesLog: [...state.rulesLog, ...newRulesLog],
     narratorQueue: [...state.narratorQueue, ...shortOptionExpiryEvents, ...narratorEvents],
     pendingTrades: [],
+    totalManualTrades: state.totalManualTrades + newManualTrades,
     isComplete,
     config: { ...state.config, rules: updatedRules },
   };

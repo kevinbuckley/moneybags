@@ -49,6 +49,7 @@ function makeState(
     rulesLog: [],
     narratorQueue: [],
     pendingTrades: [],
+    totalManualTrades: 0,
     isComplete: false,
     ...overrides,
   };

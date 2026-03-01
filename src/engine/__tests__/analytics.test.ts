@@ -147,7 +147,7 @@ describe("computeAnalytics — placeholder fields", () => {
     expect(result.hodlReturnPct).toBe(0);
   });
 
-  it("totalManualTrades is 0 (not tracked at engine layer yet)", () => {
+  it("totalManualTrades is 0 at engine layer (populated by useAnalytics from state.totalManualTrades)", () => {
     const history = makeDailyHistory([10000, 11000]);
     const result = computeAnalytics(history, history, 0.02);
     expect(result.totalManualTrades).toBe(0);

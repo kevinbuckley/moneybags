@@ -62,7 +62,7 @@ export interface TradeOrder {
   amount?: number;    // dollar amount (for buy)
   quantity?: number;  // units (for sell); also 0-100 pct for sell_pct
   targetPct?: number; // 0-1 (for rebalance)
-  source: "manual" | "rule";
+  source: "manual" | "rule" | "initial";
   ruleId?: string;
   // Options-specific fields (sell_put / close_option)
   strike?: number;        // strike price

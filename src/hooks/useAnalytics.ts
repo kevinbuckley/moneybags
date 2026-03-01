@@ -61,7 +61,8 @@ export function useAnalytics(): SimulationAnalytics | null {
 
     const grade = computeGrade(base.totalReturnPct, base.sharpeRatio);
     const totalRulesFired = state.rulesLog.length;
+    const totalManualTrades = state.totalManualTrades;
 
-    return { ...base, hodlReturnPct, grade, totalRulesFired };
+    return { ...base, hodlReturnPct, grade, totalRulesFired, totalManualTrades };
   }, [state, priceData]);
 }
