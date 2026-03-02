@@ -8,11 +8,11 @@ import { UpcomingList } from "@/components/landing/UpcomingList";
 import { getDailyScenario, getUpcomingChallenges, getTodayString, addDays } from "@/lib/dailyChallenge";
 
 export const metadata: Metadata = {
-  title: "Mr. Moneybags — Invest Fake Money",
+  title: "Mr. Moneybags - Invest Fake Money",
   description:
     "Simulate the 2008 crisis, dot-com bubble, Black Monday, and more with real historical data. Rules, auto-trading, and zero real money on the line.",
   openGraph: {
-    title: "Mr. Moneybags — Invest Fake Money",
+    title: "Mr. Moneybags - Invest Fake Money",
     description:
       "Simulate famous market crashes and bull runs with real data. Pick a scenario, build a portfolio, set trading rules, and see what happens.",
   },

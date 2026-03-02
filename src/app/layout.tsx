@@ -18,7 +18,7 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://mrmoneybagsgame.com"),
   title: {
-    default: "Mr. Moneybags — Invest Fake Money",
+    default: "Mr. Moneybags - Invest Fake Money",
     template: "%s | Mr. Moneybags",
   },
   description:
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     icon: "/favicon.svg",
   },
   openGraph: {
-    title: "Mr. Moneybags — Invest Fake Money",
+    title: "Mr. Moneybags - Invest Fake Money",
     description:
       "Simulate famous market crashes and bull runs with real financial instruments. No real money required.",
     type: "website",
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: "Mr. Moneybags — Invest Fake Money",
+    title: "Mr. Moneybags - Invest Fake Money",
     description:
       "Simulate famous market crashes and bull runs. No real money required.",
   },
