@@ -4,14 +4,12 @@ import { useEffect, useRef, useState } from "react";
 
 const PUB_ID = "ca-pub-2954508563135581";
 const SLOT_ID = "4359398745";
-const COUNTDOWN_SEC = 5;
 
 interface AdInterstitialProps {
   onDismiss: () => void;
 }
 
 export function AdInterstitial({ onDismiss }: AdInterstitialProps) {
-  const [seconds, setSeconds] = useState(COUNTDOWN_SEC);
   const [adFailed, setAdFailed] = useState(false);
   const insRef = useRef<HTMLModElement>(null);
   const isDev = process.env.NODE_ENV === "development";
@@ -39,30 +37,16 @@ export function AdInterstitial({ onDismiss }: AdInterstitialProps) {
     return () => clearTimeout(timer);
   }, [isDev]);
 
-  // Countdown timer
-  useEffect(() => {
-    if (seconds <= 0) return;
-    const t = setTimeout(() => setSeconds((s) => s - 1), 1000);
-    return () => clearTimeout(t);
-  }, [seconds]);
-
-  const canSkip = seconds <= 0;
-
   return (
     <div className="fixed inset-0 z-50 bg-base flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <span className="text-xs text-muted">Advertisement</span>
         <button
-          onClick={canSkip ? onDismiss : undefined}
-          disabled={!canSkip}
-          className={`text-sm font-semibold px-3 py-1 rounded-lg transition-colors ${
-            canSkip
-              ? "bg-accent text-white"
-              : "bg-surface text-muted cursor-not-allowed"
-          }`}
+          onClick={onDismiss}
+          className="text-sm font-semibold px-3 py-1 rounded-lg bg-accent text-white"
         >
-          {canSkip ? "Start Simulation →" : `Skip in ${seconds}s`}
+          Start Simulation →
         </button>
       </div>
 
