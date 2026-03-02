@@ -179,7 +179,7 @@ export default function ResultsPage() {
     const text = [
       `I turned ${formatCurrency(analytics.startingValue)} into ${formatCurrency(analytics.finalValue)} (${sign}${ret.toFixed(1)}%) during the ${state.config.scenario.name}.`,
       `Grade: ${analytics.grade} · ${p.emoji} ${p.type}`,
-      `Think you can do better? moneybags.app`,
+      `Think you can do better? mrmoneybagsgame.com`,
     ].join("\n\n");
     window.open(
       `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`,
@@ -228,7 +228,7 @@ export default function ResultsPage() {
     const text = [
       `I turned ${formatCurrency(analytics.startingValue)} into ${formatCurrency(analytics.finalValue)} (${sign}${ret.toFixed(1)}%) during the ${state.config.scenario.name}.`,
       `Grade: ${analytics.grade}${beatHodl ? ` | Beat buy-and-hold by ${(ret - hodl).toFixed(1)}%` : ""}`,
-      "moneybags.app",
+      "mrmoneybagsgame.com",
     ].join("\n");
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);

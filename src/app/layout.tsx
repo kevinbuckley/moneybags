@@ -16,7 +16,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://moneybags.app"),
+  metadataBase: new URL("https://mrmoneybagsgame.com"),
   title: {
     default: "Mr. Moneybags — Invest Fake Money",
     template: "%s | Mr. Moneybags",
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     description:
       "Simulate famous market crashes and bull runs with real financial instruments. No real money required.",
     type: "website",
-    url: "https://moneybags.app",
+    url: "https://mrmoneybagsgame.com",
     siteName: "Mr. Moneybags",
   },
   twitter: {
