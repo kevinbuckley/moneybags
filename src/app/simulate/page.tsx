@@ -9,7 +9,6 @@ import { PortfolioChart } from "@/components/charts/PortfolioChart";
 import { NarratorPopup } from "@/components/narrator/NarratorPopup";
 import { PlaybackControls } from "@/components/simulation/PlaybackControls";
 import { PortfolioPanel } from "@/components/simulation/PortfolioPanel";
-import { AdInterstitial } from "@/components/ads/AdInterstitial";
 import { SellPutPanel } from "@/components/simulation/SellPutPanel";
 import { CoveredCallPanel } from "@/components/simulation/CoveredCallPanel";
 
@@ -23,17 +22,16 @@ export default function SimulatePage() {
   const pause = useSimulationStore((s) => s.pause);
   const lastRunHistories = useLeaderboardStore((s) => s.lastRunHistories);
   const hasAutoStarted = useRef(false);
-  const [adDismissed, setAdDismissed] = useState(false);
   const [sellPutOpen, setSellPutOpen] = useState(false);
   const [coveredCallOpen, setCoveredCallOpen] = useState(false);
 
-  // Auto-start only after ad is dismissed
+  // Auto-start on mount
   useEffect(() => {
-    if (state && adDismissed && !hasAutoStarted.current) {
+    if (state && !hasAutoStarted.current) {
       hasAutoStarted.current = true;
       play();
     }
-  }, [state, adDismissed, play]);
+  }, [state, play]);
 
   // Redirect to results 1.5s after simulation completes
   useEffect(() => {
@@ -74,9 +72,6 @@ export default function SimulatePage() {
 
   return (
     <main className="h-dvh flex flex-col overflow-hidden">
-      {/* Full-page ad shown before simulation starts */}
-      {!adDismissed && <AdInterstitial onDismiss={() => setAdDismissed(true)} />}
-
       {/* Portfolio header */}
       <PortfolioPanel />
 
